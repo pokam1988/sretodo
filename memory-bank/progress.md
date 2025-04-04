@@ -54,10 +54,9 @@
 
 ## 5. Potential Next Steps / Refinements
 
--   Implement ToDo Edit functionality in Frontend.
+-   ~~Implement ToDo Edit functionality in Frontend.~~ **(Done)**
+-   ~~Refactor API Service logic out of AppComponent.~~ **(Done)**
 -   Improve Frontend UI/UX (e.g., proper routing instead of *ngIf).
 -   Add OpenTelemetry instrumentation to Angular Frontend.
--   Create Grafana dashboards.
--   Refactor API Service logic out of AppComponent.
 -   Add more sophisticated backend logic (e.g., user accounts, real persistence).
 -   Prepare for Kubernetes deployment. 

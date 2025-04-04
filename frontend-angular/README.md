@@ -40,6 +40,48 @@ Das Frontend kommuniziert mit den Backend-Services über das Nginx Gateway unter
 7.  Pomodoro-Ansicht und -Logik (inkl. Countdown) hinzugefügt.
 8.  API-Aufrufe auf Nginx-Gateway-Pfade umgestellt (`/api/...`).
 
+# Frontend Angular Service
+
+Dieses Verzeichnis enthält die Angular-Frontend-Anwendung für die SRE ToDo Demo.
+
+## Funktionen
+
+-   Zeigt eine Liste von ToDos an.
+-   Ermöglicht das Hinzufügen neuer ToDos.
+-   Ermöglicht das Umschalten des Erledigt-Status von ToDos.
+-   Ermöglicht das Löschen von ToDos.
+-   **Neu:** Ermöglicht das Bearbeiten des Titels bestehender ToDos.
+-   Zeigt einfache Statistiken (Gesamtzahl der ToDos) vom Statistik-Service an.
+-   Zeigt den Status des Pomodoro-Timers an und ermöglicht das Starten/Stoppen.
+-   Zeigt einen Countdown für laufende Pomodoro-Timer.
+-   Navigationsleiste zum Umschalten zwischen ToDo-, Statistik- und Pomodoro-Ansicht.
+-   Grundlegendes Fehlerhandling bei API-Aufrufen.
+
+## Technische Details
+
+-   Angular CLI Version (siehe `package.json`).
+-   Verwendet Standalone Components.
+-   Nutzt den `HttpClient` (ausgelagert in `ApiService`) für die Kommunikation mit den Backend-Services über das Nginx-Gateway (`/api/...`).
+-   Grundlegendes Styling für eine einfache Benutzeroberfläche.
+-   **Neu:** Die Logik für API-Aufrufe wurde in den `ApiService` (`src/app/api.service.ts`) refaktoriert.
+
+## Starten (als Teil des Docker Compose Stacks)
+
+Das Frontend wird als Teil des gesamten Stacks mit `docker-compose up` gebaut und gestartet. Es ist über das Nginx-Gateway auf `http://localhost/` erreichbar.
+
+## Entwicklung
+
+-   `cd frontend-angular`
+-   `npm install` (falls noch nicht geschehen)
+-   `ng serve`: Startet den Angular Development Server (typischerweise auf `http://localhost:4200`). Beachte, dass API-Aufrufe fehlschlagen können, wenn das Backend nicht läuft oder CORS nicht korrekt konfiguriert ist (im Docker-Setup wird dies durch Nginx gehandhabt).
+
+## Nächste Schritte / TODOs
+
+-   [ ] Korrekte Implementierung von Angular Routing anstelle von `*ngIf` für die Ansichten.
+-   [ ] OpenTelemetry-Instrumentierung hinzufügen.
+-   [ ] UI/UX-Verbesserungen.
+-   [ ] Auslagern der Interfaces in eigene Dateien (`models.ts`).
+
 # FrontendAngular
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.17.

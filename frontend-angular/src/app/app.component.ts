@@ -1,8 +1,8 @@
 import { Component, OnInit, inject, OnDestroy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ApiService } from './api.service';
 
 interface Todo {
   id: number;
@@ -33,7 +33,7 @@ interface PomodoroState {
 export class AppComponent implements OnInit, OnDestroy {
   title = 'SRE ToDo MVP';
 
-  private http = inject(HttpClient);
+  private apiService = inject(ApiService);
 
   todos: Todo[] = [];
   statistics: Statistics | null = null;
@@ -49,10 +49,6 @@ export class AppComponent implements OnInit, OnDestroy {
   editTodoTitle: string = ''; // Temporärer Titel während der Bearbeitung
 
   currentView: 'todos' | 'statistics' | 'pomodoro' = 'todos'; // Startansicht
-
-  private todoApiUrl = '/api/todos/';
-  private statsApiUrl = '/api/statistics';
-  private pomodoroApiUrl = '/api/pomodoro/timers';
 
   ngOnInit(): void {
     this.loadInitialData();
@@ -83,14 +79,14 @@ export class AppComponent implements OnInit, OnDestroy {
 
   loadTodos(): void {
     this.error = null;
-    this.http.get<Todo[]>(this.todoApiUrl).subscribe({
+    this.apiService.getTodos().subscribe({
       next: (data) => {
         this.todos = data.sort((a, b) => a.id - b.id);
-        console.log('Todos loaded:', data);
+        console.log('Todos loaded via ApiService:', data);
       },
       error: (err) => {
-        console.error('Error loading todos:', err);
-        this.error = 'Could not load ToDos. Is the ToDo service running?';
+        console.error('Error loading todos via ApiService:', err);
+        this.error = 'Could not load ToDos. Check API or service status.';
       },
     });
   }
@@ -98,89 +94,82 @@ export class AppComponent implements OnInit, OnDestroy {
   addTodo(): void {
     if (!this.newTodoTitle.trim()) return;
     this.error = null;
-    const newTodoPayload = { title: this.newTodoTitle, completed: false };
 
-    this.http.post<Todo>(this.todoApiUrl, newTodoPayload).subscribe({
+    this.apiService.addTodo(this.newTodoTitle).subscribe({
       next: (addedTodo) => {
-        console.log('ToDo added:', addedTodo);
+        console.log('ToDo added via ApiService:', addedTodo);
         this.todos.push(addedTodo);
         this.todos.sort((a, b) => a.id - b.id);
         this.newTodoTitle = '';
         this.loadStatistics();
       },
       error: (err) => {
-        console.error('Error adding todo:', err);
-        this.error =
-          'Could not add ToDo. Check API endpoint or if service is running.';
+        console.error('Error adding todo via ApiService:', err);
+        this.error = 'Could not add ToDo. Check API or service status.';
       },
     });
   }
 
   loadStatistics(): void {
-    this.http.get<Statistics>(this.statsApiUrl).subscribe({
+    this.apiService.getStatistics().subscribe({
       next: (data) => {
         this.statistics = data;
-        console.log('Statistics loaded:', data);
+        console.log('Statistics loaded via ApiService:', data);
         if (data.error && !this.error) {
           console.error('Statistics API reported an error:', data.error);
           this.error = `Statistics Error: ${data.error}`;
         }
       },
       error: (err) => {
-        console.error('Error loading statistics:', err);
+        console.error('Error loading statistics via ApiService:', err);
         if (!this.error) {
           this.error =
-            'Could not load Statistics. Is the Statistics service running?';
+            'Could not load Statistics. Check API or service status.';
         }
       },
     });
   }
 
   loadPomodoroStatus(): void {
-    this.http
-      .get<PomodoroState>(`${this.pomodoroApiUrl}/${this.pomodoroUserId}`)
-      .subscribe({
-        next: (data) => {
-          this.pomodoroState = data;
-          console.log('Pomodoro status loaded:', data);
-          if (data.is_running && data.end_time) {
-            this.startCountdown(data.end_time);
-          } else {
-            this.clearCountdown();
+    this.apiService.getPomodoroStatus(this.pomodoroUserId).subscribe({
+      next: (data) => {
+        this.pomodoroState = data;
+        console.log('Pomodoro status loaded via ApiService:', data);
+        if (data.is_running && data.end_time) {
+          this.startCountdown(data.end_time);
+        } else {
+          this.clearCountdown();
+        }
+      },
+      error: (err) => {
+        if (err.status !== 404) {
+          console.error('Error loading pomodoro status via ApiService:', err);
+          if (!this.error) {
+            this.error =
+              'Could not load Pomodoro status. Check API or service status.';
           }
-        },
-        error: (err) => {
-          if (err.status !== 404) {
-            console.error('Error loading pomodoro status:', err);
-            if (!this.error) {
-              this.error =
-                'Could not load Pomodoro status. Is the service running?';
-            }
-          } else {
-            this.pomodoroState = null;
-            this.clearCountdown();
-          }
-        },
-      });
+        } else {
+          this.pomodoroState = null;
+          this.clearCountdown();
+        }
+      },
+    });
   }
 
   startPomodoro(minutes: number = 25, type: string = 'work'): void {
     this.error = null;
-    this.http
-      .post<PomodoroState>(
-        `${this.pomodoroApiUrl}/${this.pomodoroUserId}/start`,
-        { duration_minutes: minutes, timer_type: type }
-      )
+    this.apiService
+      .startPomodoro(this.pomodoroUserId, minutes, type)
       .subscribe({
         next: (data) => {
           this.pomodoroState = data;
-          console.log('Pomodoro timer started:', data);
+          console.log('Pomodoro timer started via ApiService:', data);
           if (data.is_running && data.end_time) {
             this.startCountdown(data.end_time);
           }
         },
         error: (err) => {
-          console.error('Error starting pomodoro timer:', err);
+          console.error('Error starting pomodoro timer via ApiService:', err);
           this.error = 'Could not start Pomodoro timer.';
         },
       });
@@ -189,22 +178,17 @@ export class AppComponent implements OnInit, OnDestroy {
   stopPomodoro(): void {
     if (!this.pomodoroState || !this.pomodoroState.is_running) return;
     this.error = null;
-    this.http
-      .post<PomodoroState>(
-        `${this.pomodoroApiUrl}/${this.pomodoroUserId}/stop`,
-        {}
-      )
-      .subscribe({
-        next: (data) => {
-          this.pomodoroState = data;
-          console.log('Pomodoro timer stopped:', data);
-          this.clearCountdown();
-        },
-        error: (err) => {
-          console.error('Error stopping pomodoro timer:', err);
-          this.error = 'Could not stop Pomodoro timer.';
-        },
-      });
+    this.apiService.stopPomodoro(this.pomodoroUserId).subscribe({
+      next: (data) => {
+        this.pomodoroState = data;
+        console.log('Pomodoro timer stopped via ApiService:', data);
+        this.clearCountdown();
+      },
+      error: (err) => {
+        console.error('Error stopping pomodoro timer via ApiService:', err);
+        this.error = 'Could not stop Pomodoro timer.';
+      },
+    });
   }
 
   startCountdown(endTimeISO: string): void {
@@ -258,29 +242,26 @@ export class AppComponent implements OnInit, OnDestroy {
   // --- ToDo Update & Delete Logic ---
   toggleTodoCompletion(todo: Todo): void {
     this.error = null;
+    const originalStatus = todo.completed;
     const updatedTodo = { ...todo, completed: !todo.completed };
-    this.http
-      .put<Todo>(`${this.todoApiUrl}/${todo.id}`, updatedTodo)
-      .subscribe({
-        next: (returnedTodo) => {
-          console.log('ToDo updated:', returnedTodo);
-          // Finde den Index und aktualisiere das Objekt im Array
-          const index = this.todos.findIndex((t) => t.id === todo.id);
-          if (index !== -1) {
-            this.todos[index] = returnedTodo;
-          }
-          // Statistik muss nicht neu geladen werden, da sich die Anzahl nicht ändert
-        },
-        error: (err) => {
-          console.error('Error updating todo:', err);
-          this.error = 'Could not update ToDo status.';
-          // Mache die Änderung rückgängig im Frontend bei Fehler
-          const index = this.todos.findIndex((t) => t.id === todo.id);
-          if (index !== -1) {
-            this.todos[index].completed = todo.completed; // Alten Status wiederherstellen
-          }
-        },
-      });
+
+    this.apiService.updateTodo(updatedTodo).subscribe({
+      next: (result) => {
+        console.log('Todo completion toggled via ApiService:', result);
+        // Update im Array nur, wenn Backend erfolgreich war
+        const index = this.todos.findIndex((t) => t.id === todo.id);
+        if (index !== -1) {
+          this.todos[index] = result;
+          this.todos.sort((a, b) => a.id - b.id); // Ggf. neu sortieren
+        }
+      },
+      error: (err) => {
+        console.error('Error toggling todo completion via ApiService:', err);
+        this.error = 'Could not update ToDo status.';
+        // Rollback UI change on error
+        todo.completed = originalStatus;
+      },
+    });
   }
 
   deleteTodo(id: number): void {
@@ -288,14 +269,14 @@ export class AppComponent implements OnInit, OnDestroy {
       return;
     }
     this.error = null;
-    this.http.delete<void>(`${this.todoApiUrl}/${id}`).subscribe({
+    this.apiService.deleteTodo(id).subscribe({
       next: () => {
-        console.log('ToDo deleted:', id);
+        console.log(`Todo ${id} deleted via ApiService`);
         this.todos = this.todos.filter((t) => t.id !== id);
         this.loadStatistics(); // Statistik aktualisieren
       },
       error: (err) => {
-        console.error('Error deleting todo:', err);
+        console.error(`Error deleting todo ${id} via ApiService:`, err);
         this.error = 'Could not delete ToDo.';
       },
     });
@@ -321,25 +302,26 @@ export class AppComponent implements OnInit, OnDestroy {
       return;
     }
     this.error = null;
-    const updatedTodo = { ...originalTodo, title: this.editTodoTitle.trim() };
+    const updatedTodoData = {
+      ...originalTodo,
+      title: this.editTodoTitle.trim(),
+    };
 
-    this.http
-      .put<Todo>(`${this.todoApiUrl}/${originalTodo.id}`, updatedTodo)
-      .subscribe({
-        next: (returnedTodo) => {
-          console.log('ToDo title updated:', returnedTodo);
-          // Finde den Index und aktualisiere das Objekt im Array
-          const index = this.todos.findIndex((t) => t.id === originalTodo.id);
-          if (index !== -1) {
-            this.todos[index] = returnedTodo;
-          }
-          this.cancelEdit(); // Bearbeitungsmodus beenden
-        },
-        error: (err) => {
-          console.error('Error updating todo title:', err);
-          this.error = 'Could not update ToDo title.';
-          // Bearbeitungsmodus *nicht* beenden, damit der User es erneut versuchen kann
-        },
-      });
+    this.apiService.updateTodo(updatedTodoData).subscribe({
+      next: (savedTodo) => {
+        console.log('Todo updated via ApiService:', savedTodo);
+        const index = this.todos.findIndex((t) => t.id === originalTodo.id);
+        if (index !== -1) {
+          this.todos[index] = savedTodo;
+          this.todos.sort((a, b) => a.id - b.id);
+        }
+        this.cancelEdit(); // Bearbeitungsmodus beenden
+      },
+      error: (err) => {
+        console.error('Error updating todo via ApiService:', err);
+        this.error = 'Could not update ToDo.';
+        // Kein explizites Rollback nötig, da Eingabefeld noch den Fehler zeigt
+      },
+    });
   }
 }

@@ -280,77 +280,75 @@
       </div>
 
       <!-- ToDo View -->
-      <div *ngIf="currentView === 'todos'">
-        <section class="content-section todo-list">
-          <h2>ToDo List</h2>
-          <div *ngIf="todos.length > 0; else noTodos">
-            <ul>
-              <li *ngFor="let todo of todos" [class.completed]="todo.completed">
-                <input
-                  type="checkbox"
-                  [checked]="todo.completed"
-                  (change)="toggleTodoCompletion(todo)"
-                />
-                <div
-                  class="todo-content"
-                  *ngIf="editingTodoId !== todo.id; else editMode"
-                >
-                  <span class="todo-title">{{ todo.title }}</span>
-                  <div class="todo-actions">
-                    <button (click)="startEdit(todo)">Edit</button>
-                    <button class="delete" (click)="deleteTodo(todo.id)">
-                      Delete
-                    </button>
-                  </div>
-                </div>
-                <ng-template #editMode>
-                  <div class="todo-content edit-form">
-                    <input
-                      type="text"
-                      [(ngModel)]="editTodoTitle"
-                      (keyup.enter)="saveEdit(todo)"
-                      (keyup.escape)="cancelEdit()"
-                      name="editTodoTitle-{{ todo.id }}"
-                      class="edit-input"
-                      autofocus
-                    />
-                    <div class="todo-actions">
-                      <button
-                        class="save"
-                        (click)="saveEdit(todo)"
-                        [disabled]="!editTodoTitle.trim()"
-                      >
-                        Save
-                      </button>
-                      <button class="cancel" (click)="cancelEdit()">
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                </ng-template>
-              </li>
-            </ul>
-          </div>
-          <ng-template #noTodos>
-            <p *ngIf="!error">Loading ToDos or no ToDos found...</p>
-          </ng-template>
-        </section>
+      <div *ngIf="currentView === 'todos'" class="todos-container">
+        <h2>ToDo List</h2>
 
-        <section class="content-section add-todo">
-          <h2>Create New ToDo</h2>
-          <form (ngSubmit)="addTodo()" class="add-todo-form">
-            <input
-              type="text"
-              [(ngModel)]="newTodoTitle"
-              name="newTodoTitle"
-              placeholder="Enter new ToDo title..."
-              required
-            />
-            <button type="submit" [disabled]="!newTodoTitle.trim()">
-              Add ToDo
-            </button>
-          </form>
-        </section>
+        <!-- Form to add new ToDos -->
+        <form (ngSubmit)="addTodo()" class="add-todo-form">
+          <input
+            type="text"
+            [(ngModel)]="newTodoTitle"
+            name="newTodoTitle"
+            placeholder="Enter new ToDo title..."
+            required
+          />
+          <button type="submit" [disabled]="!newTodoTitle.trim()">
+            Add ToDo
+          </button>
+        </form>
+
+        <!-- List of ToDos -->
+        <ul class="todo-list">
+          <li *ngFor="let todo of todos" [class.completed]="todo.completed">
+            <div class="todo-item-content">
+              <input
+                type="checkbox"
+                [checked]="todo.completed"
+                (change)="toggleTodoCompletion(todo)"
+              />
+
+              <!-- Conditional display: Text or Input field -->
+              <span *ngIf="editingTodoId !== todo.id" class="todo-title">{{
+                todo.title
+              }}</span>
+              <input
+                *ngIf="editingTodoId === todo.id"
+                type="text"
+                [(ngModel)]="editTodoTitle"
+                (keyup.enter)="saveEdit(todo)"
+                (keyup.escape)="cancelEdit()"
+                class="edit-input"
+                autofocus
+              />
+            </div>
+
+            <!-- Conditional display: Edit/Delete or Save/Cancel buttons -->
+            <div class="todo-actions">
+              <ng-container *ngIf="editingTodoId !== todo.id">
+                <button (click)="startEdit(todo)" class="button-edit">
+                  ✏️ Edit
+                </button>
+                <button (click)="deleteTodo(todo.id)" class="button-delete">
+                  🗑️ Delete
+                </button>
+              </ng-container>
+              <ng-container *ngIf="editingTodoId === todo.id">
+                <button
+                  (click)="saveEdit(todo)"
+                  class="button-save"
+                  [disabled]="!editTodoTitle.trim()"
+                >
+                  💾 Save
+                </button>
+                <button (click)="cancelEdit()" class="button-cancel">
+                  ❌ Cancel
+                </button>
+              </ng-container>
+            </div>
+          </li>
+        </ul>
+
+        <p *ngIf="!todos.length">No ToDos yet!</p>
       </div>
 
       <!-- Statistics View -->
