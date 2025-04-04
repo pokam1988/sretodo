@@ -1,0 +1,49 @@
+# observability-stack/grafana/provisioning/datasources/datasources.yaml
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy # Wichtig: Zugriff über Grafana Backend
+    url: http://prometheus:9090
+    isDefault: true
+    jsonData:
+      timeInterval: "15s" # Wie oft Prometheus gescraped wird
+    version: 1
+    editable: false # Verhindert manuelle Änderungen über UI
+
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    jsonData:
+      maxLines: 1000 # Maximale Anzahl Log-Zeilen
+    version: 1
+    editable: false
+
+  - name: Tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    jsonData:
+      # Konfiguration für Trace-to-Logs und Trace-to-Metrics (optional, später verfeinern)
+      tracesToLogs:
+        datasourceUid: "Loki" # Verweist auf die Loki Datasource oben (Name muss übereinstimmen!)
+        tags: ["job", "instance", "pod", "namespace"]
+        mappedTags: [{ key: "service.name", value: "app" }]
+        mapTagNamesEnabled: false
+        spanStartTimeShift: "1h"
+        spanEndTimeShift: "1h"
+        filterByTraceID: true
+        filterBySpanID: false
+        lokiSearch: true
+      # tracesToMetrics: # Optional
+      #   datasourceUid: 'Prometheus'
+      #   tags: [{ key: 'service.name' }, { key: 'job' }]
+      #   queries:
+      #     - name: 'Sample query'
+      #       query: 'rate(tempo_request_duration_seconds_sum{job="$${job}", service="$${service.name}"}[$${__range}]) / rate(tempo_request_duration_seconds_count{job="$${job}", service="$${service.name}"}[$${__range}])'
+      serviceMap:
+        datasourceUid: "Prometheus" # Für die Service Map Ansicht
+    version: 1
+    editable: false

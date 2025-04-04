@@ -189,22 +189,22 @@ services:
     container_name: grafana
     volumes:
       - grafana_data:/var/lib/grafana
-      # Provisioning von Datenquellen und Dashboards (optional, später hinzufügen)
-      # - ./observability-stack/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-      # - ./observability-stack/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      # Provisioning von Datenquellen aktivieren:
+      - ./observability-stack/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      # - ./observability-stack/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards # (Optional)
     ports:
       - "3000:3000"
     networks:
       - sretodo-net
     environment:
       - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin # Standard-Passwort ändern!
-      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-worldmap-panel # Beispiel-Plugins
-      # Datenquellen automatisch konfigurieren (Beispiele)
-      - GF_DATASOURCES_DEFAULT_NAME=Prometheus
-      - GF_DATASOURCES_DEFAULT_URL=http://prometheus:9090
-      - GF_DATASOURCES_LOKI_URL=http://loki:3100
-      - GF_DATASOURCES_TEMPO_URL=http://tempo:3200
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-worldmap-panel
+      # Entferne alte Datasource Umgebungsvariablen:
+      # - GF_DATASOURCES_DEFAULT_NAME=Prometheus
+      # - GF_DATASOURCES_DEFAULT_URL=http://prometheus:9090
+      # - GF_DATASOURCES_LOKI_URL=http://loki:3100
+      # - GF_DATASOURCES_TEMPO_URL=http://tempo:3200
     depends_on:
       - prometheus
       - loki

@@ -22,11 +22,12 @@
 
 -   **Instrumentation:** OpenTelemetry SDKs (latest stable versions for each language)
     -   Mode: Primarily Auto-instrumentation where available and suitable, manual instrumentation for specific spans/metrics/logs if needed.
--   **Collector:** OpenTelemetry Collector (Contrib distribution recommended for wider processor/exporter support)
--   **Metrics Backend:** Prometheus
--   **Tracing Backend:** Grafana Tempo
--   **Logging Backend:** Loki
--   **Visualization:** Grafana (targeting v11.x or latest stable)
+-   **Collector:** OpenTelemetry Collector (`otel/opentelemetry-collector-contrib:0.123.0`)
+-   **Metrics Backend:** Prometheus (`prom/prometheus:v3.2.1`)
+-   **Tracing Backend:** Grafana Tempo (`grafana/tempo:2.7.1`)
+-   **Logging Backend:** Loki (`grafana/loki:3.4.2`)
+-   **Visualization:** Grafana (`grafana/grafana:11.1.0`)
+-   **Grafana Datasource Provisioning:** Enabled via `observability-stack/grafana/provisioning/datasources/datasources.yaml`.
 
 ## 3. Development & Deployment Environment
 
@@ -39,8 +40,8 @@
 ## 4. Key Technical Considerations & Constraints
 
 -   **Language/Framework Versions:** Stick to the specified LTS or latest stable versions for consistency and support.
--   **OpenTelemetry Integration:** Ensure all services correctly configure and export telemetry data to the central collector via OTLP (HTTP or gRPC, TBD - likely HTTP for simplicity).
--   **Docker Compose Setup:** The `docker-compose.yml` must define all services, the collector, and the observability backends (Prometheus, Tempo, Loki, Grafana) with appropriate networking and dependencies.
+-   **OpenTelemetry Integration:** Ensure all services correctly configure and export telemetry data to the central collector via OTLP HTTP (`http://otel-collector:4318`).
+-   **Docker Compose Setup:** The `docker-compose.yml` defines all services, the collector, and the observability backends. `tempo` service runs as `root` (`user: \"0\"`) as a workaround for local volume permission issues.
 -   **Inter-Service Communication:** Services need to resolve each other's addresses within the Docker Compose network (using service names).
 -   **Resource Management:** Keep resource footprints minimal for local development feasibility.
 -   **Structured Logging:** Implement structured logging (e.g., JSON) across all services to facilitate better parsing and querying in Loki.
