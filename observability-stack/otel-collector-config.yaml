@@ -7,9 +7,13 @@ receivers:
       http:
         endpoint: 0.0.0.0:4318
         cors:
-          allowed_origins: # Erlaube Anfragen vom Frontend (ggf. anpassen)
-            - "http://localhost:4200"
+          allowed_origins:
+            - "http://localhost:4200" # Für lokale Entwicklung mit ng serve
             - "http://127.0.0.1:4200"
+            - "http://localhost" # Für Zugriff über Nginx Gateway
+            - "http://127.0.0.1" # Sicherheitshalber
+          # allowed_headers: ["*] # Standard sollte reichen
+          # expose_headers: ["*] # Standard sollte reichen
 
 processors:
   batch:
