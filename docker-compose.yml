@@ -35,9 +35,9 @@ services:
     container_name: service-dotnet-statistik
     build:
       context: ./service-dotnet-statistik
-      dockerfile: Dockerfile # Muss noch erstellt werden
+      dockerfile: Dockerfile
     ports:
-      - "8001:8080" # Beispiel: Container Port 8080 zu Host Port 8001
+      - "8001:8080"
     networks:
       - sretodo-net
     depends_on:
@@ -46,11 +46,10 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
-      - TODO_SERVICE_URL=http://service-java-todo:8080/todos # Beispiel URL
-      # OpenTelemetry Konfiguration
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318 # OTLP HTTP Endpoint
+      - TODO_SERVICE_URL=http://service-java-todo:8080/todos
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
       - OTEL_SERVICE_NAME=service-dotnet-statistik
-      - OTEL_DOTNET_AUTO_LOGS_INCLUDE_FORMATTED_MESSAGE=true # Für bessere Logs
+      - OTEL_DOTNET_AUTO_LOGS_INCLUDE_FORMATTED_MESSAGE=true
 
   service-java-todo:
     container_name: service-java-todo

@@ -28,11 +28,12 @@ Implementierung der Basis-Service-Logik und Sicherstellung des OpenTelemetry-Dat
 8.  ~~**Verify Telemetry:** Überprüfe in Grafana (Loki, Tempo, Prometheus), ob Logs, Traces und Metriken von den Services ankommen und die Korrelation funktioniert.~~
 9.  ~~**Update Memory Bank & Commit:** Den aktuellen Stand dokumentieren und committen.~~
 10. ~~**Implement Basic Logic (ToDo):** Füge CRUD-Endpunkte in `service-java-todo` hinzu.~~ (War bereits implementiert)
-11. **Implement Basic Logic (Pomodoro):** Füge Endpunkte zum Starten/Stoppen von Timern in `service-python-pomodoro` hinzu. **<- YOU ARE HERE**
-12. **Implement Basic Logic (Statistik):** Füge einen Endpunkt in `service-dotnet-statistik` hinzu, der Daten von anderen Services abruft und aggregiert.
+11. ~~**Implement Basic Logic (Pomodoro):** Füge Endpunkte zum Starten/Stoppen von Timern in `service-python-pomodoro` hinzu.~~
+12. **Implement Basic Logic (Statistik):** Füge einen Endpunkt in `service-dotnet-statistik` hinzu, der Daten von anderen Services abruft und aggregiert. **<- YOU ARE HERE**
 13. **Implement Basic Logic (Healthcheck):** Stelle sicher, dass `service-go-healthcheck` die `/health`-Endpunkte der anderen Services prüft.
 14. **Implement Basic Logic (Frontend):** Zeige grundlegende Daten von den Backend-Services im Angular Frontend an.
-15. **Update Memory Bank & Commit (Pomodoro):** Dokumentiere und committe die Pomodoro-Änderungen.
+15. ~~**Update Memory Bank & Commit (Pomodoro):** Dokumentiere und committe die Pomodoro-Änderungen.~~
+16. **Update Memory Bank & Commit (Statistik):** Dokumentiere und committe die Statistik-Änderungen.
 
 ## 4. Open Questions / Decisions
 

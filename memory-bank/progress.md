@@ -23,13 +23,15 @@
 -   **Service Logic (ToDo):** Grundlegende CRUD-Endpunkte in `service-java-todo` implementiert (waren bereits vorhanden) und funktional.
 -   **Service Logic (Pomodoro):** Grundlegende Endpunkte (Start, Stop, Status) in `service-python-pomodoro` implementiert und funktional.
 -   Dokumentation für `service-python-pomodoro` (`README.md`) aktualisiert.
+-   **Service Logic (Statistik):** `/statistics`-Endpunkt in `service-dotnet-statistik` implementiert (ruft ToDo-Service auf) und funktional. `/health`-Endpunkt hinzugefügt.
+-   Dokumentation für `service-dotnet-statistik` (`README.md`) aktualisiert.
 
 ## 3. What's Left to Build (High-Level MVP Goals)
 
 1.  ~~**Dockerfiles:** Create Dockerfiles for all services.~~
 2.  ~~**Docker Compose Build/Up:** Verify that all service images can be built and containers start.~~
 3.  ~~**OpenTelemetry Integration:** Configure and verify telemetry data flow from all services to the Collector and backends, including Trace-Log correlation.~~
-4.  **Basic Service Logic:** Implement core functionality (~~ToDo CRUD~~, ~~Pomodoro Timers~~, Statistik Aggregation, Health Checks, Frontend Display).
+4.  **Basic Service Logic:** Implement core functionality (~~ToDo CRUD~~, ~~Pomodoro Timers~~, ~~Statistik Aggregation (ToDo Count)~~, Health Checks, Frontend Display).
 5.  **Grafana Dashboards:** Create basic dashboards for visualizing data.
 
 ## 4. Known Issues / Challenges
@@ -38,4 +40,5 @@
 -   **[Behoben]** `tempo`-Container startete aufgrund einer fehlerhaften Konfiguration (`tempo-config.yaml`).
 -   **[Behoben]** Loki erkannte das `service.name` Attribut nicht korrekt als Label mit dem `otlphttp/loki` Exporter. Wechsel zum alten `loki` Exporter mit `resource` Processor als Workaround.
 -   **[Behoben]** React-Fehler in Grafana beim Anzeigen von Tempo-Traces (behoben durch Neustart von Grafana/Tempo).
--   **[Workaround]** Neubau des gesamten Stacks (`docker-compose down && docker-compose up --build`) scheint nach Code-Änderungen im Python-Service notwendig zu sein, damit Uvicorn die neuen Routen erkennt. 
+-   **[Workaround]** Neubau des gesamten Stacks (`docker-compose down && docker-compose up --build`) scheint nach Code-Änderungen im Python-Service notwendig zu sein, damit Uvicorn die neuen Routen erkennt.
+-   **[Gelöst/Beobachtung]** Startprobleme des `service-dotnet-statistik`-Containers traten auf, schienen aber eher mit dem Timing beim Hochfahren des Stacks zusammenzuhängen. Eine längere Wartezeit (`sleep 40`) nach `docker-compose up` hat das Problem behoben. Funktioniert nun auch mit OTel-Konfiguration. 
