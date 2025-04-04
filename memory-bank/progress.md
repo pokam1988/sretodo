@@ -115,4 +115,62 @@
 
 ## Bekannte Probleme:
 
-- **Grafana Dashboards:** Die vorimportierten Dashboards zeigen teilweise "No Data", da die Metrik-Namen oder Labels nicht exakt übereinstimmen. Müssen angepasst werden. 
+- **Grafana Dashboards:** Die vorimportierten Dashboards zeigen teilweise "No Data", da die Metrik-Namen oder Labels nicht exakt übereinstimmen. Müssen angepasst werden.
+
+# SRE Todo MVP - Fortschritt
+
+## Was bisher funktioniert
+
+### Infrastruktur
+- ✅ Docker-Compose-Setup für lokale Entwicklung
+- ✅ Kubernetes-Deployment mit Helm-Charts
+- ✅ Nginx Gateway als zentraler Einstiegspunkt implementiert
+- ✅ Nginx Routing für alle Services konfiguriert (Todo, Statistik, Pomodoro)
+- ✅ CORS-Konfiguration für alle API-Endpunkte implementiert
+- ✅ Nginx Routing für den OTel-Collector-Endpunkt
+- ✅ Service-Alias für den Java-Todo-Service erstellt
+
+### Anwendungsservices
+- ✅ Java Todo Service mit PostgreSQL-Integration
+- ✅ .NET Statistik Service mit Todo Service-Integration
+- ✅ Python Pomodoro Service
+- ✅ Angular Frontend mit grundlegender Funktionalität
+
+### Observability
+- ✅ OpenTelemetry Collector konfiguriert
+- ✅ Prometheus für Metriken eingerichtet
+- ✅ Grafana für Visualisierung konfiguriert
+- ✅ Tempo für Traces eingerichtet
+- ✅ Loki für Logs konfiguriert
+- ✅ OpenTelemetry-Integration in den Java Todo Service
+- ✅ OpenTelemetry-Integration in den .NET Statistik Service
+- ✅ OpenTelemetry-Integration in den Python Pomodoro Service
+
+## Was noch zu implementieren ist
+
+### Infrastruktur
+- Feinabstimmung der Ressourcenlimits für Kubernetes-Deployments
+- Optimierung der Nginx Gateway-Konfiguration für Produktionsumgebungen
+
+### Anwendungsservices
+- Verbesserung der Fehlerbehandlung in allen Services
+- Implementierung von Health Checks und Readiness Probes
+
+### Observability
+- ⚠️ Frontend OpenTelemetry-Integration abschließen
+- Erstellen von umfassenden Grafana-Dashboards für Monitoring
+- Beispielhafte SLOs und Alerts definieren
+
+## Bekannte Probleme und Herausforderungen
+
+- ✅ GELÖST: Die Todo-API-Pfade (Routing) hatten Probleme mit abschließenden Slashes, was zu 404-Fehlern führte
+- ✅ GELÖST: Der .NET Statistik Service konnte den Java Todo Service nicht unter dem erwarteten Namen erreichen
+- ✅ GELÖST: CORS-Probleme mit dem OpenTelemetry-Collector-Endpunkt für Frontend-Tracing
+- Gelegentliche Verzögerungen bei der ersten Anfrage an den Python Pomodoro Service (Cold Start)
+
+## Nächste Prioritäten
+
+1. Frontend OpenTelemetry-Integration abschließen und testen
+2. Erstellen einer Basisversion der Grafana-Dashboards für Monitoring
+3. Ressourcenlimits für alle Kubernetes-Deployments definieren
+4. Dokumentation für den gesamten Technologie-Stack fertigstellen 

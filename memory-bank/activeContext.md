@@ -92,4 +92,39 @@ Der Hauptfokus liegt nun darauf, die gesamte Anwendung für das Deployment auf K
 ## Offene Fragen / Entscheidungen
 
 - Soll das Go-Logging vor dem K8s-Deployment noch einmal versucht werden oder verschieben wir das?
-- Welche K8s-Distribution wird primär verwendet (minikube, k3d, Docker Desktop K8s)? (Beeinflusst Ingress etc.) 
+- Welche K8s-Distribution wird primär verwendet (minikube, k3d, Docker Desktop K8s)? (Beeinflusst Ingress etc.)
+
+## Aktuelle Änderungen
+
+- **04.04.2025:** Korrektur des Nginx-Routing für den Todo-API-Endpunkt
+  - Problem: Die Todo-API lieferte 404-Fehler für Anfragen an `/api/todos/`
+  - Ursache: Der Java Spring Boot Service erwartet Pfade ohne abschließende Slashes (`/todos` statt `/todos/`)
+  - Lösung: Entfernung des abschließenden Slashes im proxy_pass in der Nginx-Konfiguration
+  - Aktualisierung der Helm Charts, um diese Konfiguration bei jeder Bereitstellung anzuwenden
+
+- **04.04.2025:** CORS-Unterstützung für OpenTelemetry-Endpunkte hinzugefügt
+  - OpenTelemetry-Collector-Endpunkte wurden über das Nginx-Gateway mit korrekten CORS-Headern verfügbar gemacht
+  - Preflight-Anfragen (OPTIONS) werden nun korrekt mit Status 204 beantwortet
+  - Ermöglicht Frontend-Tracing-Integration mit dem Collector
+
+- **04.04.2025:** Service-Alias für den Java-Todo-Service erstellt
+  - Problem: Der Statistik-Service konnte den Todo-Service nicht unter dem erwarteten Namen `service-java-todo` erreichen
+  - Lösung: Ein Kubernetes-Service-Alias wurde erstellt, der auf den eigentlichen Todo-Service umleitet
+
+## Offene Entscheidungen
+
+- **Kubernetes Ressourcen-Limits:** Optimale Einstellungen für Ressourcen-Requests und Limits müssen noch definiert werden
+- **Dashboard-Erstellung:** Entscheidung über den Umfang der Grafana-Dashboards für Day-2-Operations
+
+## Nächste Schritte
+
+- Frontend-Integration mit der Trace-API testen und validieren
+- API-Gateway-Konfiguration als Helm-Chart weiter verbessern
+- Ressourcen-Limits für alle Services festlegen
+- Grafana-Dashboards für Monitoring erstellen
+
+## Erkenntnisse
+
+- Spring Boot REST Controller erwarten in der Standardkonfiguration Pfade ohne abschließenden Slash
+- Nginx-Proxy-Pass-Konfiguration muss an die erwartete Pfadstruktur der Backend-Services angepasst werden
+- Vollständige CORS-Konfiguration ist entscheidend für die korrekte Funktion von Frontend-Backend-Kommunikation 
