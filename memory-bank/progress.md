@@ -25,13 +25,15 @@
 -   Dokumentation für `service-python-pomodoro` (`README.md`) aktualisiert.
 -   **Service Logic (Statistik):** `/statistics`-Endpunkt in `service-dotnet-statistik` implementiert (ruft ToDo-Service auf) und funktional. `/health`-Endpunkt hinzugefügt.
 -   Dokumentation für `service-dotnet-statistik` (`README.md`) aktualisiert.
+-   **Service Logic (Healthcheck):** `/health/aggregate`-Endpunkt in `service-go-healthcheck` implementiert (prüft andere Services parallel) und funktional.
+-   Dokumentation für `service-go-healthcheck` (`README.md`) aktualisiert.
 
 ## 3. What's Left to Build (High-Level MVP Goals)
 
 1.  ~~**Dockerfiles:** Create Dockerfiles for all services.~~
 2.  ~~**Docker Compose Build/Up:** Verify that all service images can be built and containers start.~~
 3.  ~~**OpenTelemetry Integration:** Configure and verify telemetry data flow from all services to the Collector and backends, including Trace-Log correlation.~~
-4.  **Basic Service Logic:** Implement core functionality (~~ToDo CRUD~~, ~~Pomodoro Timers~~, ~~Statistik Aggregation (ToDo Count)~~, Health Checks, Frontend Display).
+4.  **Basic Service Logic:** Implement core functionality (~~ToDo CRUD~~, ~~Pomodoro Timers~~, ~~Statistik Aggregation (ToDo Count)~~, ~~Health Checks~~, Frontend Display).
 5.  **Grafana Dashboards:** Create basic dashboards for visualizing data.
 
 ## 4. Known Issues / Challenges
