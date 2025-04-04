@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, OnDestroy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
@@ -30,7 +30,7 @@ interface PomodoroState {
   imports: [RouterOutlet, CommonModule, FormsModule],
   templateUrl: './app.component.html',
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
   title = 'SRE ToDo MVP';
 
   private http = inject(HttpClient);
@@ -43,6 +43,10 @@ export class AppComponent implements OnInit {
   newTodoTitle: string = '';
   pomodoroRemainingTime: string = ''; // Für Countdown-Anzeige
   private countdownInterval: any = null; // Zum Speichern der Interval ID
+
+  // --- Edit State ---
+  editingTodoId: number | null = null; // ID des aktuell bearbeiteten ToDos
+  editTodoTitle: string = ''; // Temporärer Titel während der Bearbeitung
 
   currentView: 'todos' | 'statistics' | 'pomodoro' = 'todos'; // Startansicht
 
@@ -293,5 +297,47 @@ export class AppComponent implements OnInit {
         this.error = 'Could not delete ToDo.';
       },
     });
+  }
+
+  startEdit(todo: Todo): void {
+    this.editingTodoId = todo.id;
+    this.editTodoTitle = todo.title; // Aktuellen Titel ins Editierfeld kopieren
+  }
+
+  cancelEdit(): void {
+    this.editingTodoId = null;
+    this.editTodoTitle = '';
+  }
+
+  saveEdit(originalTodo: Todo): void {
+    if (
+      !this.editTodoTitle.trim() ||
+      this.editTodoTitle === originalTodo.title
+    ) {
+      // Wenn Titel leer oder unverändert, einfach abbrechen
+      this.cancelEdit();
+      return;
+    }
+    this.error = null;
+    const updatedTodo = { ...originalTodo, title: this.editTodoTitle.trim() };
+
+    this.http
+      .put<Todo>(`${this.todoApiUrl}/${originalTodo.id}`, updatedTodo)
+      .subscribe({
+        next: (returnedTodo) => {
+          console.log('ToDo title updated:', returnedTodo);
+          // Finde den Index und aktualisiere das Objekt im Array
+          const index = this.todos.findIndex((t) => t.id === originalTodo.id);
+          if (index !== -1) {
+            this.todos[index] = returnedTodo;
+          }
+          this.cancelEdit(); // Bearbeitungsmodus beenden
+        },
+        error: (err) => {
+          console.error('Error updating todo title:', err);
+          this.error = 'Could not update ToDo title.';
+          // Bearbeitungsmodus *nicht* beenden, damit der User es erneut versuchen kann
+        },
+      });
   }
 }

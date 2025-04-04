@@ -86,6 +86,7 @@
         padding: 10px 0;
         border-bottom: 1px solid #f0f0f0;
         transition: background-color 0.2s ease;
+        justify-content: space-between; /* Platz für Aktionen schaffen */
       }
       .todo-list li:last-child {
         border-bottom: none;
@@ -99,8 +100,17 @@
         height: 18px;
         cursor: pointer; /* Ändern, wenn Bearbeiten implementiert ist */
       }
+      .todo-list .todo-content {
+        display: flex;
+        align-items: center;
+        flex-grow: 1; /* Nimmt verfügbaren Platz ein */
+      }
       .todo-list .todo-title {
         flex-grow: 1;
+        margin-right: 15px; /* Abstand zu den Buttons */
+      }
+      .todo-list .todo-actions {
+        white-space: nowrap; /* Verhindert Umbruch der Buttons */
       }
       .todo-list .todo-actions button {
         margin-left: 10px;
@@ -124,6 +134,36 @@
       .todo-list .completed .todo-title {
         text-decoration: line-through;
         color: #aaa;
+      }
+
+      /* Styles für Editier-Modus */
+      .todo-content.edit-form {
+        gap: 10px; /* Abstand zwischen Input und Buttons */
+      }
+      .edit-input {
+        flex-grow: 1;
+        padding: 6px 8px;
+        border: 1px solid #2a5298;
+        border-radius: 3px;
+        font-size: 0.95em;
+      }
+      .todo-actions button.save {
+        background-color: #5cb85c;
+        border-color: #4cae4c;
+        color: white;
+      }
+      .todo-actions button.save:hover {
+        background-color: #449d44;
+        border-color: #398439;
+      }
+      .todo-actions button.cancel {
+        background-color: #f0ad4e;
+        border-color: #eea236;
+        color: white;
+      }
+      .todo-actions button.cancel:hover {
+        background-color: #ec971f;
+        border-color: #d58512;
       }
 
       /* Add ToDo Form Styles */
@@ -251,13 +291,43 @@
                   [checked]="todo.completed"
                   (change)="toggleTodoCompletion(todo)"
                 />
-                <span class="todo-title">{{ todo.title }}</span>
-                <div class="todo-actions">
-                  <button disabled>Edit</button>
-                  <button class="delete" (click)="deleteTodo(todo.id)">
-                    Delete
-                  </button>
+                <div
+                  class="todo-content"
+                  *ngIf="editingTodoId !== todo.id; else editMode"
+                >
+                  <span class="todo-title">{{ todo.title }}</span>
+                  <div class="todo-actions">
+                    <button (click)="startEdit(todo)">Edit</button>
+                    <button class="delete" (click)="deleteTodo(todo.id)">
+                      Delete
+                    </button>
+                  </div>
                 </div>
+                <ng-template #editMode>
+                  <div class="todo-content edit-form">
+                    <input
+                      type="text"
+                      [(ngModel)]="editTodoTitle"
+                      (keyup.enter)="saveEdit(todo)"
+                      (keyup.escape)="cancelEdit()"
+                      name="editTodoTitle-{{ todo.id }}"
+                      class="edit-input"
+                      autofocus
+                    />
+                    <div class="todo-actions">
+                      <button
+                        class="save"
+                        (click)="saveEdit(todo)"
+                        [disabled]="!editTodoTitle.trim()"
+                      >
+                        Save
+                      </button>
+                      <button class="cancel" (click)="cancelEdit()">
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </ng-template>
               </li>
             </ul>
           </div>
