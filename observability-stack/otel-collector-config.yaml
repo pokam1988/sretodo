@@ -31,14 +31,10 @@ processors:
         action: upsert
 
 exporters:
-  logging:
+  debug:
     # Schreibt Telemetriedaten ins Collector-Log (nützlich für Debugging).
     verbosity: detailed # Kann auf 'basic' oder 'none' reduziert werden.
 
-  otlphttp/prometheus:
-    # Sendet Metriken an Prometheus (über Remote Write oder OTLP -> hier nicht verwendet, Prometheus scraped den Collector)
-    # Alternative: Prometheus-Exporter verwenden (siehe unten)
-    pass: # Dummy-Exporter, da Prometheus den Collector scraped
 
   prometheus:
     # Stellt einen Endpunkt bereit, den Prometheus scrapen kann.
@@ -77,15 +73,15 @@ service:
     traces:
       receivers: [otlp]
       processors: [memory_limiter, batch]
-      exporters: [logging, otlphttp/tempo]
+      exporters: [debug, otlphttp/tempo]
     metrics:
       receivers: [otlp]
       processors: [memory_limiter, batch]
-      exporters: [logging, prometheus] # Sendet an den Prometheus-Exporter
+      exporters: [debug, prometheus] # Sendet an den Prometheus-Exporter
     logs:
       receivers: [otlp]
       processors: [memory_limiter, batch]
-      exporters: [logging, loki]
+      exporters: [debug, loki]
 
 extensions:
   health_check:
