@@ -67,6 +67,7 @@ graph TD
 6.  **Grafana:**
     *   Visualisiert Daten aus Loki (Logs), Tempo (Traces) und Prometheus (Metriken).
     *   Datenquellen werden automatisch über Provisioning (`./grafana/provisioning/datasources`) konfiguriert.
+    *   Dashboards können über Provisioning (`./grafana/provisioning/dashboards`) bereitgestellt werden (Beispiel für Java-Service hinzugefügt).
     *   Erlaubt anonymen Zugriff (`GF_AUTH_ANONYMOUS_ENABLED=true`).
     *   Ermöglicht die Korrelation von Traces zu Logs durch Konfiguration der Tempo-Datenquelle.
 
@@ -76,6 +77,8 @@ graph TD
 *   **`prometheus.yml`**: Definiert die Scraping-Jobs für Prometheus (welche Endpunkte sollen überwacht werden).
 *   **`tempo-config.yaml`**: Konfiguriert Tempo (Speicherort, Receiver etc.). Loki verwendet eine Standardkonfiguration.
 *   **`./grafana/provisioning/datasources/datasources.yaml`**: Definiert die Prometheus-, Loki- und Tempo-Datenquellen für Grafana und konfiguriert die Trace-zu-Logs-Verbindung.
+*   **`./grafana/provisioning/dashboards/dashboard-provider.yaml`**: Konfiguriert Grafana, um Dashboards aus dem Verzeichnis zu laden.
+*   **`./grafana/provisioning/dashboards/service-java-todo.json`**: Beispiel-Dashboard für den Java ToDo Service.
 
 ## Wichtige Endpunkte & Ports (Host-Perspektive)
 

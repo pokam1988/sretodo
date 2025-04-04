@@ -195,7 +195,7 @@ services:
       - grafana_data:/var/lib/grafana
       # Provisioning von Datenquellen aktivieren:
       - ./observability-stack/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-      # - ./observability-stack/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards # (Optional)
+      - ./observability-stack/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards # Aktiviert!
     ports:
       - "3000:3000"
     networks:

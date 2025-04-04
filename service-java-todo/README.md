@@ -16,4 +16,8 @@ Dieser Service verwaltet die ToDo-Items über eine REST API.
 6.  `application.properties` für DB-Verbindung konfiguriert.
 7.  `Todo`-Klasse zu JPA-Entität umgewandelt.
 8.  `TodoRepository` (Spring Data JPA) erstellt.
-9.  Controller zur Verwendung des Repositories und der DB statt In-Memory-Speicher angepasst. 
+9.  Controller zur Verwendung des Repositories und der DB statt In-Memory-Speicher angepasst.
+10. Testdaten über `@PostConstruct` im Controller initialisiert.
+11. OpenTelemetry Java Agent zum Dockerfile hinzugefügt und im `ENTRYPOINT` aktiviert.
+12. OTel Agent via Umgebungsvariablen in `docker-compose.yml` konfiguriert (Service Name, Collector Endpoint, Exporter-Einstellungen).
+13. Logback-Appender-Instrumentierung für OTLP-Logs aktiviert (`otel.instrumentation.logback-appender.enabled=true`). 

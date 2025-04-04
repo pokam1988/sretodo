@@ -45,10 +45,9 @@ exporters:
     # Sendet Logs an Loki.
     endpoint: "http://loki:3100/loki/api/v1/push"
     # Konvertiere OTel Resource Attribute in Loki Labels
-    attributes:
-      resource:
-        # Nehme das OTel 'service.name' Attribut und mache daraus das Loki 'service_name' Label
-        service.name: service_name
+    labels:
+      # Mappe das OTel Resource Attribut 'service.name' auf das Loki Label 'service_name'
+      service_name: 'resource["service.name"]'
     # Deaktiviere das automatische Hinzufügen von Standardlabels, da wir service_name manuell setzen
     default_labels_enabled:
       exporter: false
