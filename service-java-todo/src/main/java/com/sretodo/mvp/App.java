@@ -82,6 +82,34 @@ class TodoController {
     @Autowired // Spring injects the repository bean
     private TodoRepository todoRepository;
 
+    // Initialisierung der Testdaten nach Konstruktion der Bean
+    @jakarta.annotation.PostConstruct
+    public void initTestData() {
+        System.out.println("Initializing database with test data via @PostConstruct...");
+        // Da ddl-auto=create die Tabelle leert, brauchen wir keine Prüfung mehr.
+        Todo todo1 = new Todo();
+        todo1.setTitle("Erstes Test-ToDo aus @PostConstruct");
+        todo1.setCompleted(false);
+        todoRepository.save(todo1);
+
+        Todo todo2 = new Todo();
+        todo2.setTitle("Zweites Test-ToDo - Erledigt (@PostConstruct)");
+        todo2.setCompleted(true);
+        todoRepository.save(todo2);
+
+        Todo todo3 = new Todo();
+        todo3.setTitle("OpenTelemetry implementieren (@PostConstruct)");
+        todo3.setCompleted(false);
+        todoRepository.save(todo3);
+
+        Todo todo4 = new Todo();
+        todo4.setTitle("Grafana Dashboards erstellen (@PostConstruct)");
+        todo4.setCompleted(false);
+        todoRepository.save(todo4);
+
+        System.out.println("Test data initialized via @PostConstruct.");
+    }
+
     // GET /todos - Alle ToDos abrufen
     @GetMapping
     public List<Todo> getAllTodos() {

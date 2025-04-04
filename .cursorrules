@@ -11,6 +11,7 @@
 *   **Observability:** Ensure OpenTelemetry is correctly implemented in all services, data flows to the collector, and backends (Prometheus, Tempo, Loki) are configured.
 *   **Docker Compose:** Maintain a working `docker-compose.yml` as a primary deliverable for local execution.
 *   **Commit & Push Frequency:** Create structured, descriptive commits after each logical step or significant change and push them to the current GitHub branch.
+*   **Rebuild after Change:** ALWAYS run `docker-compose down && docker-compose up --build` after modifying the code of ANY service to ensure the entire stack is rebuilt and restarted with the latest changes.
 
 ## User Preferences & Workflow
 
