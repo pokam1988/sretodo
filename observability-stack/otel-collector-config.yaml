@@ -1,0 +1,92 @@
+# observability-stack/otel-collector-config.yaml
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins: # Erlaube Anfragen vom Frontend (ggf. anpassen)
+            - "http://localhost:4200"
+            - "http://127.0.0.1:4200"
+
+processors:
+  batch:
+    # Batcht Telemetriedaten, um die Anzahl der Exporte zu reduzieren.
+    send_batch_size: 1024
+    timeout: 10s
+
+  memory_limiter:
+    # Verhindert, dass der Collector zu viel Speicher verbraucht.
+    check_interval: 1s
+    limit_percentage: 75
+    spike_limit_percentage: 25
+
+  # Resource Processor: Fügt allen Telemetriedaten gemeinsame Attribute hinzu
+  resource:
+    attributes:
+      - key: deployment.environment
+        value: "development"
+        action: upsert
+
+exporters:
+  logging:
+    # Schreibt Telemetriedaten ins Collector-Log (nützlich für Debugging).
+    verbosity: detailed # Kann auf 'basic' oder 'none' reduziert werden.
+
+  otlphttp/prometheus:
+    # Sendet Metriken an Prometheus (über Remote Write oder OTLP -> hier nicht verwendet, Prometheus scraped den Collector)
+    # Alternative: Prometheus-Exporter verwenden (siehe unten)
+    pass: # Dummy-Exporter, da Prometheus den Collector scraped
+
+  prometheus:
+    # Stellt einen Endpunkt bereit, den Prometheus scrapen kann.
+    endpoint: "0.0.0.0:8889"
+    # Namespace kann hier definiert werden, um Metriken zu gruppieren
+    namespace: "sretodo_mvp"
+
+  loki:
+    # Sendet Logs an Loki.
+    endpoint: "http://loki:3100/loki/api/v1/push"
+    # Fügt automatisch Service-Namen als Loki-Label hinzu, wenn nicht vorhanden
+    default_labels_enabled:
+      exporter: false
+      job: false
+      instance: false
+      level: false
+    # Format der Logs (kann angepasst werden)
+    # format: "json"
+
+  otlphttp/tempo:
+    # Sendet Traces an Tempo via OTLP HTTP.
+    endpoint: "http://tempo:4318/v1/traces"
+    tls:
+      insecure: true # Für lokale Entwicklung ohne TLS
+
+service:
+  telemetry:
+    logs:
+      level: "info" # Collector interne Log-Stufe (debug, info, warn, error)
+    metrics:
+      address: 0.0.0.0:8888 # Endpunkt für interne Collector-Metriken
+
+  extensions: [health_check]
+
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [logging, otlphttp/tempo]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [logging, prometheus] # Sendet an den Prometheus-Exporter
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [logging, loki]
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133

@@ -1,0 +1,211 @@
+version: "3.8"
+
+networks:
+  sretodo-net:
+    driver: bridge
+
+volumes:
+  prometheus_data: {}
+  grafana_data: {}
+  loki_data: {}
+  tempo_data: {}
+
+services:
+  # --- Application Services ---
+
+  frontend-angular:
+    container_name: frontend-angular
+    build:
+      context: ./frontend-angular
+      dockerfile: Dockerfile # Muss noch erstellt werden
+    ports:
+      - "4200:80" # Beispiel: Angular Dev Server Port zu Host Port 80 (oder 4200, je nach Dockerfile)
+    networks:
+      - sretodo-net
+    depends_on:
+      - service-dotnet-statistik
+      - service-python-pomodoro
+    environment:
+      # Beispiel: URLs für Backend-Services
+      - API_STATISTIK_URL=http://service-dotnet-statistik:8001
+      - API_POMODORO_URL=http://service-python-pomodoro:8002
+
+  service-dotnet-statistik:
+    container_name: service-dotnet-statistik
+    build:
+      context: ./service-dotnet-statistik
+      dockerfile: Dockerfile # Muss noch erstellt werden
+    ports:
+      - "8001:8080" # Beispiel: Container Port 8080 zu Host Port 8001
+    networks:
+      - sretodo-net
+    depends_on:
+      - service-java-todo
+      - otel-collector
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - TODO_SERVICE_URL=http://service-java-todo:8080/todos # Beispiel URL
+      # OpenTelemetry Konfiguration
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318 # OTLP HTTP Endpoint
+      - OTEL_SERVICE_NAME=service-dotnet-statistik
+      - OTEL_DOTNET_AUTO_LOGS_INCLUDE_FORMATTED_MESSAGE=true # Für bessere Logs
+
+  service-java-todo:
+    container_name: service-java-todo
+    build:
+      context: ./service-java-todo
+      dockerfile: Dockerfile # Muss noch erstellt werden
+    ports:
+      - "8080:8080" # Standard Spring Boot Port
+    networks:
+      - sretodo-net
+    depends_on:
+      - otel-collector
+    environment:
+      - SERVER_PORT=8080
+      # OpenTelemetry Konfiguration (via Agent oder SDK)
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318 # OTLP HTTP Endpoint
+      - OTEL_SERVICE_NAME=service-java-todo
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER=otlp # Wenn SDK-basiertes Logging verwendet wird
+      - OTEL_TRACES_EXPORTER=otlp
+      # Java Agent Konfiguration (wenn verwendet)
+      # - JAVA_TOOL_OPTIONS=-javaagent:/app/opentelemetry-javaagent.jar
+
+  service-python-pomodoro:
+    container_name: service-python-pomodoro
+    build:
+      context: ./service-python-pomodoro
+      dockerfile: Dockerfile # Muss noch erstellt werden
+    ports:
+      - "8002:8002" # Port aus app.py
+    networks:
+      - sretodo-net
+    depends_on:
+      - otel-collector
+    environment:
+      - PORT=8002
+      # OpenTelemetry Konfiguration
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318 # OTLP HTTP Endpoint
+      - OTEL_SERVICE_NAME=service-python-pomodoro
+      - OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true
+
+  service-go-healthcheck:
+    container_name: service-go-healthcheck
+    build:
+      context: ./service-go-healthcheck
+      dockerfile: Dockerfile # Muss noch erstellt werden
+    ports:
+      - "8003:8003" # Port aus main.go
+    networks:
+      - sretodo-net
+    depends_on:
+      - service-dotnet-statistik
+      - service-java-todo
+      - service-python-pomodoro
+      - otel-collector
+    environment:
+      - PORT=8003
+      # Zu prüfende Service URLs (Beispiele)
+      - CHECK_URL_STATISTIK=http://service-dotnet-statistik:8080/health # Annahme eines /health Endpunkts
+      - CHECK_URL_TODO=http://service-java-todo:8080/actuator/health # Standard Spring Boot Actuator
+      - CHECK_URL_POMODORO=http://service-python-pomodoro:8002/health
+      # OpenTelemetry Konfiguration
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318 # OTLP HTTP Endpoint
+      - OTEL_SERVICE_NAME=service-go-healthcheck
+
+  # --- Observability Stack ---
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.104.0 # Verwende Contrib für mehr Exporter/Receiver
+    container_name: otel-collector
+    command: ["--config=/etc/otelcol-contrib/otel-collector-config.yaml"]
+    volumes:
+      - ./observability-stack/otel-collector-config.yaml:/etc/otelcol-contrib/otel-collector-config.yaml # Konfigurationsdatei
+    ports:
+      - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP HTTP receiver (von uns bevorzugt)
+      - "13133:13133" # health_check extension
+      - "8888:8888" # Prometheus metrics scraped by Prometheus
+      - "8889:8889" # Prometheus exporter exposed metrics
+      - "9464" # Prometheus exporter endpoint
+    networks:
+      - sretodo-net
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+      - "--web.enable-lifecycle" # Ermöglicht Neuladen der Konfiguration via API
+    volumes:
+      - ./observability-stack/prometheus.yml:/etc/prometheus/prometheus.yml # Konfigurationsdatei
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - sretodo-net
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:3.1.0
+    container_name: loki
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100" # Loki API Port
+    volumes:
+      - loki_data:/loki # Persistenz für Index und Chunks (optional für lokales Setup)
+    networks:
+      - sretodo-net
+    restart: unless-stopped
+
+  tempo:
+    image: grafana/tempo:2.5.0
+    container_name: tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./observability-stack/tempo-config.yaml:/etc/tempo.yaml # Muss noch erstellt werden
+      - tempo_data:/tmp/tempo
+    ports:
+      - "3200:3200" # Tempo default port
+      - "4317" # OTLP gRPC receiver (Tempo kann OTLP direkt empfangen)
+      - "4318" # OTLP HTTP receiver
+      - "9411" # Zipkin receiver
+    networks:
+      - sretodo-net
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+      # Provisioning von Datenquellen und Dashboards (optional, später hinzufügen)
+      # - ./observability-stack/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      # - ./observability-stack/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+    ports:
+      - "3000:3000"
+    networks:
+      - sretodo-net
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin # Standard-Passwort ändern!
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-worldmap-panel # Beispiel-Plugins
+      # Datenquellen automatisch konfigurieren (Beispiele)
+      - GF_DATASOURCES_DEFAULT_NAME=Prometheus
+      - GF_DATASOURCES_DEFAULT_URL=http://prometheus:9090
+      - GF_DATASOURCES_LOKI_URL=http://loki:3100
+      - GF_DATASOURCES_TEMPO_URL=http://tempo:3200
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    restart: unless-stopped
