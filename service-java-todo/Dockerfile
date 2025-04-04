@@ -22,8 +22,14 @@ RUN mvn package -DskipTests
 # Verwende ein schlankes JRE-Image (Java 21)
 FROM eclipse-temurin:21-jre-alpine
 
+# OpenTelemetry Agent Version (muss mit der in pom.xml übereinstimmen!)
+ARG OTEL_AGENT_VERSION=2.5.0
+
 # Setze das Arbeitsverzeichnis im Container
 WORKDIR /app
+
+# Kopiere die OpenTelemetry Agent JAR aus dem Maven Repo der Builder-Stage
+COPY --from=builder /root/.m2/repository/io/opentelemetry/javaagent/opentelemetry-javaagent/${OTEL_AGENT_VERSION}/opentelemetry-javaagent-${OTEL_AGENT_VERSION}.jar ./opentelemetry-javaagent.jar
 
 # Kopiere das gebaute JAR-File aus der Builder-Stage
 # Das JAR befindet sich normalerweise in /app/target/<artifact-id>-<version>.jar
@@ -35,5 +41,6 @@ COPY --from=builder /app/target/service-java-todo-*.jar ./app.jar
 # Exponiere den Port, auf dem die Anwendung läuft (Standard: 8080)
 EXPOSE 8080
 
-# Kommando zum Starten der Anwendung
-ENTRYPOINT ["java", "-jar", "./app.jar"] 
+# Kommando zum Starten der Anwendung MIT dem Agent
+# Der Agent wird über die -javaagent JVM-Option aktiviert
+ENTRYPOINT ["java", "-javaagent:./opentelemetry-javaagent.jar", "-jar", "./app.jar"] 

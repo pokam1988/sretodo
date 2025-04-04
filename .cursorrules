@@ -12,6 +12,7 @@
 *   **Docker Compose:** Maintain a working `docker-compose.yml` as a primary deliverable for local execution.
 *   **Commit & Push Frequency:** Create structured, descriptive commits after each logical step or significant change and push them to the current GitHub branch.
 *   **Rebuild after Change:** ALWAYS run `docker-compose down && docker-compose up --build` after modifying the code of ANY service to ensure the entire stack is rebuilt and restarted with the latest changes.
+*   **Component README Update:** After making changes to a component (application service or observability config), ALWAYS update its corresponding `README.md` file (e.g., `service-java-todo/README.md`, `observability-stack/README.md`) to document the changes and implementation steps.
 
 ## User Preferences & Workflow
 

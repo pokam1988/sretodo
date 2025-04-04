@@ -66,14 +66,15 @@ services:
       - postgresql
     environment:
       - SERVER_PORT=8080
-      # OpenTelemetry Konfiguration (via Agent oder SDK)
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318 # OTLP HTTP Endpoint
+      # OpenTelemetry Agent Konfiguration (über den -javaagent Schalter im Dockerfile aktiviert)
       - OTEL_SERVICE_NAME=service-java-todo
-      - OTEL_METRICS_EXPORTER=otlp
-      - OTEL_LOGS_EXPORTER=otlp # Wenn SDK-basiertes Logging verwendet wird
-      - OTEL_TRACES_EXPORTER=otlp
-      # Java Agent Konfiguration (wenn verwendet)
-      # - JAVA_TOOL_OPTIONS=-javaagent:/app/opentelemetry-javaagent.jar
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318 # Collector OTLP HTTP Endpoint
+      - OTEL_METRICS_EXPORTER=otlp # An OTLP senden (oder none, da Prometheus scrapt)
+      - OTEL_LOGS_EXPORTER=otlp # Logs auch via OTLP senden
+      - OTEL_TRACES_EXPORTER=otlp # Traces via OTLP senden
+      - OTEL_INSTRUMENTATION_JDBC_ENABLED=true # Sicherstellen, dass DB-Aufrufe getraced werden
+      - otel.instrumentation.logback-appender.enabled=true # Logback-Appender aktivieren
+      # - JAVA_TOOL_OPTIONS=-javaagent:/app/opentelemetry-javaagent.jar # Nicht mehr hier nötig, da im Dockerfile ENTRYPOINT
 
   service-python-pomodoro:
     container_name: service-python-pomodoro
@@ -203,6 +204,9 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-worldmap-panel
+      # Anonymen Zugriff erlauben
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
       # Entferne alte Datasource Umgebungsvariablen:
       # - GF_DATASOURCES_DEFAULT_NAME=Prometheus
       # - GF_DATASOURCES_DEFAULT_URL=http://prometheus:9090

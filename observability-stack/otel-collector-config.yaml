@@ -35,7 +35,6 @@ exporters:
     # Schreibt Telemetriedaten ins Collector-Log (nützlich für Debugging).
     verbosity: detailed # Kann auf 'basic' oder 'none' reduziert werden.
 
-
   prometheus:
     # Stellt einen Endpunkt bereit, den Prometheus scrapen kann.
     endpoint: "0.0.0.0:8889"
@@ -45,18 +44,21 @@ exporters:
   loki:
     # Sendet Logs an Loki.
     endpoint: "http://loki:3100/loki/api/v1/push"
-    # Fügt automatisch Service-Namen als Loki-Label hinzu, wenn nicht vorhanden
+    # Konvertiere OTel Resource Attribute in Loki Labels
+    attributes:
+      resource:
+        # Nehme das OTel 'service.name' Attribut und mache daraus das Loki 'service_name' Label
+        service.name: service_name
+    # Deaktiviere das automatische Hinzufügen von Standardlabels, da wir service_name manuell setzen
     default_labels_enabled:
       exporter: false
       job: false
-      instance: false
-      level: false
     # Format der Logs (kann angepasst werden)
     # format: "json"
 
   otlphttp/tempo:
     # Sendet Traces an Tempo via OTLP HTTP.
-    endpoint: "http://tempo:4318/v1/traces"
+    endpoint: "http://tempo:4318"
     tls:
       insecure: true # Für lokale Entwicklung ohne TLS
 

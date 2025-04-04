@@ -25,18 +25,19 @@ datasources:
     type: tempo
     access: proxy
     url: http://tempo:3200
+    uid: Tempo # Feste UID vergeben (optional, aber gut für Referenzen)
     jsonData:
-      # Konfiguration für Trace-to-Logs und Trace-to-Metrics (optional, später verfeinern)
       tracesToLogs:
-        datasourceUid: "Loki" # Verweist auf die Loki Datasource oben (Name muss übereinstimmen!)
-        tags: ["job", "instance", "pod", "namespace"]
-        mappedTags: [{ key: "service.name", value: "app" }]
-        mapTagNamesEnabled: false
-        spanStartTimeShift: "1h"
-        spanEndTimeShift: "1h"
-        filterByTraceID: true
-        filterBySpanID: false
-        lokiSearch: true
+        datasourceUid: "Loki" # Sollte auf die UID der Loki-Datasource verweisen, Name geht oft auch
+        # Filter nach Trace ID und unserem Service-Namen Label
+        # Nutzt Interpolation: ${__trace.id} und ${__tags["service.name"]
+        tags: [] # Entfernen, da wir die Abfrage unten definieren
+        lokiSearch: true # Aktiviert die Verwendung von LogQL
+        query: '{service_name="${__tags["service.name"]}"} |="${__trace.id}"'
+        spanStartTimeShift: "1s" # Kleinerer Zeit-Shift ist meist besser
+        spanEndTimeShift: "-1s"
+        filterByTraceID: false # Deaktivieren, da wir es in der Query haben
+        filterBySpanID: false # Span ID ist meist nicht nötig/hilfreich
       # tracesToMetrics: # Optional
       #   datasourceUid: 'Prometheus'
       #   tags: [{ key: 'service.name' }, { key: 'job' }]
