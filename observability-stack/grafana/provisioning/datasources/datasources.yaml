@@ -1,0 +1,50 @@
+# observability-stack/grafana/provisioning/datasources/datasources.yaml
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy # Wichtig: Zugriff über Grafana Backend
+    url: http://prometheus:9090
+    isDefault: true
+    jsonData:
+      timeInterval: "15s" # Wie oft Prometheus gescraped wird
+    version: 1
+    editable: false # Verhindert manuelle Änderungen über UI
+
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    jsonData:
+      maxLines: 1000 # Maximale Anzahl Log-Zeilen
+    version: 1
+    editable: false
+
+  - name: Tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    uid: Tempo # Feste UID vergeben (optional, aber gut für Referenzen)
+    jsonData:
+      tracesToLogs:
+        datasourceUid: "Loki" # Sollte auf die UID der Loki-Datasource verweisen, Name geht oft auch
+        # Filter nach Trace ID und unserem Service-Namen Label
+        # Nutzt Interpolation: ${__trace.id} und ${__tags["service.name"]
+        tags: [] # Entfernen, da wir die Abfrage unten definieren
+        lokiSearch: true # Aktiviert die Verwendung von LogQL
+        query: '{service_name="${__tags["service.name"]}"} |="${__trace.id}"'
+        spanStartTimeShift: "1s" # Kleinerer Zeit-Shift ist meist besser
+        spanEndTimeShift: "-1s"
+        filterByTraceID: false # Deaktivieren, da wir es in der Query haben
+        filterBySpanID: false # Span ID ist meist nicht nötig/hilfreich
+      # tracesToMetrics: # Optional
+      #   datasourceUid: 'Prometheus'
+      #   tags: [{ key: 'service.name' }, { key: 'job' }]
+      #   queries:
+      #     - name: 'Sample query'
+      #       query: 'rate(tempo_request_duration_seconds_sum{job="$${job}", service="$${service.name}"}[$${__range}]) / rate(tempo_request_duration_seconds_count{job="$${job}", service="$${service.name}"}[$${__range}])'
+      serviceMap:
+        datasourceUid: "Prometheus" # Für die Service Map Ansicht
+    version: 1
+    editable: false

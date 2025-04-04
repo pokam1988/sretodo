@@ -1,0 +1,267 @@
+version: "3.8"
+
+networks:
+  sretodo-net:
+    driver: bridge
+
+volumes:
+  prometheus_data: {}
+  grafana_data: {}
+  loki_data: {}
+  tempo_data: {}
+  postgres_data: {} # Volume für PostgreSQL Daten
+
+services:
+  # --- Gateway ---
+  nginx-gateway:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: nginx-gateway
+    ports:
+      - "80:80"
+    networks:
+      - sretodo-net
+    depends_on:
+      frontend-angular:
+        condition: service_started
+      service-java-todo:
+        condition: service_healthy
+      service-dotnet-statistik:
+        condition: service_started
+      service-python-pomodoro:
+        condition: service_started
+    restart: unless-stopped
+
+  # --- Application Services ---
+
+  frontend-angular:
+    container_name: frontend-angular
+    build:
+      context: ./frontend-angular
+      dockerfile: Dockerfile
+    networks:
+      - sretodo-net
+    depends_on:
+      - service-dotnet-statistik
+      - service-python-pomodoro
+
+  service-dotnet-statistik:
+    container_name: service-dotnet-statistik
+    build:
+      context: ./service-dotnet-statistik
+      dockerfile: Dockerfile
+    networks:
+      - sretodo-net
+    depends_on:
+      - service-java-todo
+      - otel-collector
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - TODO_SERVICE_URL=http://service-java-todo:8080/todos
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_SERVICE_NAME=service-dotnet-statistik
+      - OTEL_DOTNET_AUTO_LOGS_INCLUDE_FORMATTED_MESSAGE=true
+
+  service-java-todo:
+    container_name: service-java-todo
+    build:
+      context: ./service-java-todo
+      dockerfile: Dockerfile
+    networks:
+      - sretodo-net
+    depends_on:
+      otel-collector:
+        condition: service_started
+      postgresql:
+        condition: service_started
+    environment:
+      - SERVER_PORT=8080
+      - OTEL_SERVICE_NAME=service-java-todo
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER=otlp
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_INSTRUMENTATION_JDBC_ENABLED=true
+      - otel.instrumentation.logback-appender.enabled=true
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--spider",
+          "--quiet",
+          "http://localhost:8080/actuator/health",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  service-python-pomodoro:
+    container_name: service-python-pomodoro
+    build:
+      context: ./service-python-pomodoro
+      dockerfile: Dockerfile
+    networks:
+      - sretodo-net
+    depends_on:
+      - otel-collector
+    environment:
+      - PORT=8002
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_SERVICE_NAME=service-python-pomodoro
+      - OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true
+
+  service-go-healthcheck:
+    container_name: service-go-healthcheck
+    build:
+      context: ./service-go-healthcheck
+      dockerfile: Dockerfile
+    networks:
+      - sretodo-net
+    depends_on:
+      - service-dotnet-statistik
+      - service-java-todo
+      - service-python-pomodoro
+      - otel-collector
+    environment:
+      - PORT=8003
+      - CHECK_URL_STATISTIK=http://service-dotnet-statistik:8080/health
+      - CHECK_URL_TODO=http://service-java-todo:8080/actuator/health
+      - CHECK_URL_POMODORO=http://service-python-pomodoro:8002/health
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_SERVICE_NAME=service-go-healthcheck
+
+  # --- Observability Stack ---
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.123.0 # Verwende Contrib für mehr Exporter/Receiver
+    container_name: otel-collector
+    command: ["--config=/etc/otelcol-contrib/otel-collector-config.yaml"]
+    volumes:
+      - ./observability-stack/otel-collector-config.yaml:/etc/otelcol-contrib/otel-collector-config.yaml # Konfigurationsdatei
+    ports:
+      - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP HTTP receiver (von uns bevorzugt)
+      - "13133:13133" # health_check extension
+      - "8888:8888" # Prometheus metrics scraped by Prometheus
+      - "8889:8889" # Prometheus exporter exposed metrics
+      - "9464" # Prometheus exporter endpoint
+    networks:
+      - sretodo-net
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+      - postgresql
+
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    container_name: prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+      - "--web.enable-lifecycle" # Ermöglicht Neuladen der Konfiguration via API
+    volumes:
+      - ./observability-stack/prometheus.yml:/etc/prometheus/prometheus.yml # Konfigurationsdatei
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - sretodo-net
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:3.4.2
+    container_name: loki
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100" # Loki API Port
+    volumes:
+      - loki_data:/loki # Persistenz für Index und Chunks (optional für lokales Setup)
+    networks:
+      - sretodo-net
+    restart: unless-stopped
+
+  tempo:
+    image: grafana/tempo:2.7.1
+    container_name: tempo
+    user: "0"
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./observability-stack/tempo-config.yaml:/etc/tempo.yaml
+      - tempo_data:/data/tempo
+    ports:
+      - "3200:3200" # Tempo default port
+      - "4317" # OTLP gRPC receiver (Tempo kann OTLP direkt empfangen)
+      - "4318" # OTLP HTTP receiver
+      - "9411" # Zipkin receiver
+    networks:
+      - sretodo-net
+    restart: unless-stopped
+
+  # cadvisor:
+  #   image: gcr.io/cadvisor/cadvisor:v0.49.1 # Aktuelle Version prüfen
+  #   container_name: cadvisor
+  #   privileged: true # Nötig für Zugriff auf Docker-Infos
+  #   volumes:
+  #     - /:/rootfs:ro
+  #     - /var/run:/var/run:rw
+  #     - /sys:/sys:ro
+  #     - /var/lib/docker/:/var/lib/docker:ro
+  #   ports:
+  #     - "8081:8080" # cAdvisor UI (optional, kann bei Bedarf exposed werden)
+  #   networks:
+  #     - sretodo-net
+  #   restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+      # Provisioning von Datenquellen aktivieren:
+      - ./observability-stack/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./observability-stack/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards # Aktiviert!
+    ports:
+      - "3000:3000"
+    networks:
+      - sretodo-net
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-worldmap-panel
+      # Anonymen Zugriff erlauben
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      # Entferne alte Datasource Umgebungsvariablen:
+      # - GF_DATASOURCES_DEFAULT_NAME=Prometheus
+      # - GF_DATASOURCES_DEFAULT_URL=http://prometheus:9090
+      # - GF_DATASOURCES_LOKI_URL=http://loki:3100
+      # - GF_DATASOURCES_TEMPO_URL=http://tempo:3200
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    restart: unless-stopped
+
+  # --- Datenbank ---
+
+  postgresql:
+    image: postgres:16-alpine
+    container_name: postgresql
+    environment:
+      POSTGRES_DB: sretodo_db
+      POSTGRES_USER: sretodo_user
+      POSTGRES_PASSWORD: sretodo_password # Passwort sollte sicherer gewählt werden!
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - sretodo-net
+    restart: unless-stopped

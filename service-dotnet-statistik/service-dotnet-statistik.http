@@ -1,0 +1,6 @@
+@service_dotnet_statistik_HostAddress = http://localhost:5223
+
+GET {{service_dotnet_statistik_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

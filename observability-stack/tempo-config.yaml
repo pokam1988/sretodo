@@ -1,0 +1,74 @@
+# observability-stack/tempo-config.yaml
+server:
+  http_listen_port: 3200
+
+distributor:
+  # receivers: [otlp, zipkin] # Aktiviere OTLP und Zipkin Receiver # <<< REMOVED / Kept commented out for 2.7.1
+  # Limits können hier bei Bedarf hinzugefügt werden
+  receivers: # Korrekte Platzierung für 2.x
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+    zipkin:
+      endpoint: 0.0.0.0:9411
+
+ingester:
+  trace_idle_period: 10s # traces werden nach 10s Inaktivität geflusht
+  max_block_bytes: 1_000_000 # 1MB pro Block
+  max_block_duration: 5m # Schneide Blöcke nach 5 Minuten ab
+
+compactor:
+  compaction:
+    compaction_window: 1h # Komprimiere Blöcke älter als 1 Stunde
+    max_block_bytes: 100_000_000 # 100MB Zielgröße für komprimierte Blöcke
+    block_retention: 1h # Behalte Blöcke für 1 Stunde (für lokale Entwicklung ok)
+    compacted_block_retention: 10m # Behalte komprimierte Blöcke nur 10min
+
+storage:
+  trace:
+    backend: local # Lokales Dateisystem als Speicher
+    local:
+      path: /data/tempo/blocks
+    wal:
+      path: /data/tempo/wal # Write-ahead-log für eingehende Spans
+      # buffer_size: 16_777_216        # (Optional) 16MiB buffer
+      # checkpoint_threshold: 4_194_304 # (Optional) 4MiB checkpoint threshold
+    pool:
+      max_workers: 100 # Maximale Anzahl paralleler Anfragen
+      queue_depth: 10000 # Warteschlangengröße für Anfragen
+
+# Top-level receivers block entfernen
+# receivers:
+#   otlp:
+#     protocols:
+#       grpc:
+#         endpoint: 0.0.0.0:4317
+#       http:
+#         endpoint: 0.0.0.0:4318
+#   zipkin:
+#     endpoint: 0.0.0.0:9411
+
+# Metrics generator moved to top level
+metrics_generator:
+  storage:
+    path: /data/tempo/generator/wal
+    remote_write:
+      - url: http://prometheus:9090/api/v1/write # Back to 'url' for 2.7.1
+        send_exemplars: true
+# Override für lokale Entwicklung - Auskommentiert für Tempo 2.7.1
+# overrides:
+#   # Kurze Intervalle für schnelles Feedback lokal
+#   ingestion_burst_size: 10000
+#   ingestion_rate_limit: 10000
+#   max_traces_per_user: 10000
+#   # Kurze Retention für lokale Entwicklung
+#   defaults:
+#     metrics_generator:
+#       storage:
+#         path: /tmp/tempo/generator/wal
+#         remote_write:
+#           - url: http://prometheus:9090/api/v1/write
+#             send_exemplars: true

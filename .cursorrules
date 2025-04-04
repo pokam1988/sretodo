@@ -1,0 +1,30 @@
+# .cursorrules for Observability MVP Demo App
+
+## Project Intelligence & Patterns
+
+*   **Memory Bank Usage:** ALWAYS read all core Memory Bank files (`projectbrief.md`, `productContext.md`, `systemPatterns.md`, `techContext.md`, `activeContext.md`, `progress.md`) at the start of each session/task.
+*   **Documentation Updates:** Update Memory Bank (especially `activeContext.md` and `progress.md`) after significant changes or discoveries. Use `update memory bank` command for full reviews.
+*   **Language:** Respond and generate code comments primarily in German, as per `AI-PROMPT.md`.
+*   **Clarity for Juniors:** Ensure explanations and instructions are detailed enough for junior DevOps engineers, as specified in `AI-PROMPT.md`.
+*   **Focus:** Prioritize implementing the simplified MVP (no auth) deployable via Docker Compose first, then target Kubernetes.
+*   **Technology Choices:** Adhere to the technologies and versions specified in `techContext.md`.
+*   **Observability:** Ensure OpenTelemetry is correctly implemented in all services, data flows to the collector, and backends (Prometheus, Tempo, Loki) are configured.
+*   **Docker Compose:** Maintain a working `docker-compose.yml` as a primary deliverable for local execution.
+*   **Commit & Push Frequency:** Create structured, descriptive commits after each logical step or significant change and push them to the current GitHub branch.
+*   **Rebuild after Change:** ALWAYS run `docker-compose down && docker-compose up --build` after modifying the code of ANY service to ensure the entire stack is rebuilt and restarted with the latest changes.
+*   **Component README Update:** After making changes to a component (application service or observability config), ALWAYS update its corresponding `README.md` file (e.g., `service-java-todo/README.md`, `observability-stack/README.md`) to document the changes and implementation steps.
+
+## User Preferences & Workflow
+
+*   *(To be filled in as preferences emerge)*
+
+## Known Challenges & Solutions
+
+*   *(To be filled in as challenges arise)*
+
+## Tool Usage Patterns
+
+*   Use `edit_file` to create/modify files.
+*   Use `run_terminal_cmd` for generating project structures, running builds, git operations, etc.
+*   Use `list_dir` for exploring file structure.
+*   Use `read_file` to gather context before editing. 
