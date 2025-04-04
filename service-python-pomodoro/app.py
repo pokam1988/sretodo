@@ -6,6 +6,19 @@ import threading  # Für spätere Erweiterungen mit echten Timern nützlich
 
 app = FastAPI(title="Pomodoro Service")
 
+# --- CORS Middleware hinzufügen (ENTFERNT) ---
+# origins = [
+#    "http://localhost:4200",
+# ]
+#
+# app.add_middleware(
+#    CORSMiddleware,
+#    allow_origins=origins,
+#    allow_credentials=True,
+#    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+#    allow_headers=["*"],
+# )
+
 # --- In-Memory Speicher ---
 # Simuliert eine Datenbank für den MVP
 # Struktur: {user_id: timer_state}

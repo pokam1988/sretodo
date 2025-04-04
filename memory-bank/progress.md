@@ -2,8 +2,8 @@
 
 ## 1. Current Status
 
--   **Overall:** Dockerfiles erstellt, alle Images erfolgreich gebaut, alle Container via Docker Compose gestartet und laufen. Grundlegende Erreichbarkeit (Frontend, Grafana) bestätigt.
--   **Focus:** Implementierung der Basislogik in den Services und Überprüfung des Telemetrie-Datenflusses.
+-   **Overall:** Alle Services inkl. Nginx Gateway laufen via Docker Compose. Basislogik für ToDo, Pomodoro, Statistik, Healthcheck implementiert. Frontend zeigt Daten an, erlaubt Hinzufügen/Löschen/Status ändern von ToDos und Pomodoro-Steuerung. Observability-Stack läuft, Korrelation konfiguriert.
+-   **Focus:** Abschluss MVP, Verfeinerungen.
 -   **Date:** $(date +%Y-%m-%d)
 
 ## 2. What Works
@@ -27,20 +27,35 @@
 -   Dokumentation für `service-dotnet-statistik` (`README.md`) aktualisiert.
 -   **Service Logic (Healthcheck):** `/health/aggregate`-Endpunkt in `service-go-healthcheck` implementiert (prüft andere Services parallel) und funktional.
 -   Dokumentation für `service-go-healthcheck` (`README.md`) aktualisiert.
+-   **Nginx Gateway:** Gateway implementiert, leitet API-Anfragen (`/api/*`) und Frontend-Anfragen (`/`) korrekt weiter. Zugriff über `http://localhost/`.
+-   **Frontend Logic:** Angular Frontend zeigt ToDo-Liste & Statistik an, implementiert ToDo-Erstellen/Löschen/Status-Update, Pomodoro-Anzeige/Steuerung (inkl. Countdown).
+-   **CORS:** Probleme durch zentrale Behandlung im Nginx Gateway gelöst, Konfiguration aus Backends entfernt.
 
 ## 3. What's Left to Build (High-Level MVP Goals)
 
 1.  ~~**Dockerfiles:** Create Dockerfiles for all services.~~
 2.  ~~**Docker Compose Build/Up:** Verify that all service images can be built and containers start.~~
 3.  ~~**OpenTelemetry Integration:** Configure and verify telemetry data flow from all services to the Collector and backends, including Trace-Log correlation.~~
-4.  **Basic Service Logic:** Implement core functionality (~~ToDo CRUD~~, ~~Pomodoro Timers~~, ~~Statistik Aggregation (ToDo Count)~~, ~~Health Checks~~, Frontend Display).
+4.  ~~**Basic Service Logic:** Implement core functionality (ToDo CRUD, Pomodoro Timers, Statistik Aggregation (ToDo Count), Health Checks, Frontend Display).~~ (Basislogik ist drin, Frontend zeigt an)
 5.  **Grafana Dashboards:** Create basic dashboards for visualizing data.
 
 ## 4. Known Issues / Challenges
 
--   **[Behoben]** Build-Fehler aufgrund von Abhängigkeitsproblemen (Maven `pom.xml`, npm `package-lock.json`, Go `go.sum`/Version).
--   **[Behoben]** `tempo`-Container startete aufgrund einer fehlerhaften Konfiguration (`tempo-config.yaml`).
--   **[Behoben]** Loki erkannte das `service.name` Attribut nicht korrekt als Label mit dem `otlphttp/loki` Exporter. Wechsel zum alten `loki` Exporter mit `resource` Processor als Workaround.
--   **[Behoben]** React-Fehler in Grafana beim Anzeigen von Tempo-Traces (behoben durch Neustart von Grafana/Tempo).
--   **[Workaround]** Neubau des gesamten Stacks (`docker-compose down && docker-compose up --build`) scheint nach Code-Änderungen im Python-Service notwendig zu sein, damit Uvicorn die neuen Routen erkennt.
--   **[Gelöst/Beobachtung]** Startprobleme des `service-dotnet-statistik`-Containers traten auf, schienen aber eher mit dem Timing beim Hochfahren des Stacks zusammenzuhängen. Eine längere Wartezeit (`sleep 40`) nach `docker-compose up` hat das Problem behoben. Funktioniert nun auch mit OTel-Konfiguration. 
+-   **[Behoben]** Build-Fehler.
+-   **[Behoben]** `tempo`-Container Startfehler.
+-   **[Behoben]** Loki-Label-Problem (Workaround mit altem Exporter).
+-   **[Behoben]** Grafana React-Fehler.
+-   **[Behoben]** Python/Uvicorn Routen-Update-Problem (Workaround: Stack-Neustart).
+-   **[Behoben]** .NET-Startprobleme (Workaround: Längere Wartezeit).
+-   **[Behoben]** CORS-Probleme (Gelöst durch Nginx Gateway).
+-   **[Behoben]** Nginx Gateway Start/Konfigurationsprobleme (Volume Mounts, Konfig-Fehler).
+
+## 5. Potential Next Steps / Refinements
+
+-   Implement ToDo Edit functionality in Frontend.
+-   Improve Frontend UI/UX (e.g., proper routing instead of *ngIf).
+-   Add OpenTelemetry instrumentation to Angular Frontend.
+-   Create Grafana dashboards.
+-   Refactor API Service logic out of AppComponent.
+-   Add more sophisticated backend logic (e.g., user accounts, real persistence).
+-   Prepare for Kubernetes deployment. 

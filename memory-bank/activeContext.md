@@ -2,44 +2,43 @@
 
 ## 1. Current Focus
 
-Implementierung der Basis-Service-Logik und Sicherstellung des OpenTelemetry-Datenflusses.
+Abschluss des MVPs, Behebung letzter Probleme und Planung nächster Schritte (z.B. Grafana Dashboards, Verfeinerungen, Kubernetes).
 
 ## 2. Recent Activities
 
--   Project structure created for all microservices.
--   Basic project files initialized for each service.
--   Initial `docker-compose.yml` created.
--   Minimal configuration files for Prometheus, OpenTelemetry Collector, and Tempo created.
--   Memory Bank initialized.
--   `.cursorrules` created.
--   **Dockerfiles:** Alle Dockerfiles wurden erstellt.
--   **Build/Startup:** Mehrere Iterationen von `docker-compose build` und `docker-compose up` durchgeführt, um Build-Fehler (Abhängigkeiten in Java, Node, Go) und Laufzeitfehler (Tempo-Konfiguration) zu beheben.
--   **Verification:** Alle Services laufen nun stabil in Docker Compose. Frontend und Grafana sind über die definierten Ports erreichbar.
+-   Basislogik für ToDo, Pomodoro, Statistik und Healthcheck implementiert.
+-   Frontend zeigt Daten an und erlaubt Interaktion (ToDo Add/Delete/Toggle, Pomodoro Start/Stop).
+-   **Nginx Gateway:** Implementiert als zentraler Einstiegspunkt (Port 80), leitet API- und Frontend-Anfragen weiter.
+-   **CORS:** Probleme durch Gateway gelöst, Konfigurationen in Backends entfernt.
+-   **Troubleshooting:** Diverse Start- und Konfigurationsprobleme mit Docker Compose, Nginx Volumes und Service-Timing behoben.
+-   Frontend mit Countdown-Timer für Pomodoro erweitert.
 
 ## 3. Next Steps
 
-1.  ~~**Create Dockerfile for `service-java-todo`:** Define build stages (using Maven) and runtime environment (JRE).~~
-2.  ~~**Create Dockerfile for `service-dotnet-statistik`:** Define build SDK and runtime ASP.NET image.~~
-3.  ~~**Create Dockerfile for `service-python-pomodoro`:** Define base image, install dependencies, and specify run command (uvicorn).~~
-4.  ~~**Create Dockerfile for `service-go-healthcheck`:** Define multi-stage build (builder and runner).~~
-5.  ~~**Create Dockerfile for `frontend-angular`:** Define multi-stage build (Node for building, Nginx/web server for serving).~~
-6.  ~~**Verify Docker Compose Build:** Run `docker-compose build` to ensure all images can be built successfully.~~
-7.  ~~**Verify Docker Compose Up:** Run `docker-compose up` to check if all containers start without immediate errors.~~
-8.  ~~**Verify Telemetry:** Überprüfe in Grafana (Loki, Tempo, Prometheus), ob Logs, Traces und Metriken von den Services ankommen und die Korrelation funktioniert.~~
-9.  ~~**Update Memory Bank & Commit:** Den aktuellen Stand dokumentieren und committen.~~
-10. ~~**Implement Basic Logic (ToDo):** Füge CRUD-Endpunkte in `service-java-todo` hinzu.~~ (War bereits implementiert)
-11. ~~**Implement Basic Logic (Pomodoro):** Füge Endpunkte zum Starten/Stoppen von Timern in `service-python-pomodoro` hinzu.~~
-12. ~~**Implement Basic Logic (Statistik):** Füge einen Endpunkt in `service-dotnet-statistik` hinzu, der Daten von anderen Services abruft und aggregiert.~~
-13. **Implement Basic Logic (Healthcheck):** Stelle sicher, dass `service-go-healthcheck` die `/health`-Endpunkte der anderen Services prüft. **<- YOU ARE HERE**
-14. **Implement Basic Logic (Frontend):** Zeige grundlegende Daten von den Backend-Services im Angular Frontend an.
-15. ~~**Update Memory Bank & Commit (Pomodoro):** Dokumentiere und committe die Pomodoro-Änderungen.~~
-16. ~~**Update Memory Bank & Commit (Statistik):** Dokumentiere und committe die Statistik-Änderungen.~~
-17. **Update Memory Bank & Commit (Healthcheck):** Dokumentiere und committe die Healthcheck-Änderungen.
+1.  ~~**Create Dockerfile for `service-java-todo`~~ **(Done)**
+2.  ~~**Create Dockerfile for `service-dotnet-statistik`~~ **(Done)**
+3.  ~~**Create Dockerfile for `service-python-pomodoro`~~ **(Done)**
+4.  ~~**Create Dockerfile for `service-go-healthcheck`~~ **(Done)**
+5.  ~~**Create Dockerfile for `frontend-angular`~~ **(Done)**
+6.  ~~**Verify Docker Compose Build:**~~ **(Done)**
+7.  ~~**Verify Docker Compose Up:**~~ **(Done)**
+8.  ~~**Verify Telemetry:**~~ **(Done)**
+9.  ~~**Update Memory Bank & Commit:**~~ **(Done)**
+10. ~~**Implement Basic Logic (ToDo):**~~ **(Done)**
+11. ~~**Implement Basic Logic (Pomodoro):**~~ **(Done)**
+12. ~~**Implement Basic Logic (Statistik):**~~ **(Done)**
+13. ~~**Implement Basic Logic (Healthcheck):**~~ **(Done)**
+14. ~~**Implement Basic Logic (Frontend):**~~ **(Done - Anzeige, Add/Delete/Toggle, Pomodoro)**
+15. ~~**Update Memory Bank & Commit (Pomodoro):**~~ **(Done)**
+16. ~~**Update Memory Bank & Commit (Statistik):**~~ **(Done)**
+17. ~~**Update Memory Bank & Commit (Healthcheck):**~~ **(Done)**
+18. **Update Memory Bank & Commit (Gateway & Frontend):** Den aktuellen Stand dokumentieren und committen. **<- YOU ARE HERE**
+19. **Define & Implement Next Feature/Refinement:** (z.B. Grafana Dashboards, ToDo Edit, UI Routing, Kubernetes Prep...)
 
 ## 4. Open Questions / Decisions
 
--   Definitive `/health`-Endpunkt-Pfade für alle Services festlegen (falls nicht Standard).
--   Genaues Datenformat für die Statistik-Aggregation definieren.
+-   Genaues Datenformat für die Statistik-Aggregation definieren (aktuell nur ToDo-Anzahl).
+-   Priorisierung der nächsten Schritte (siehe Abschnitt 5 in `progress.md`).
 
 ## 5. Blockers
 

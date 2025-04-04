@@ -12,32 +12,41 @@ volumes:
   postgres_data: {} # Volume für PostgreSQL Daten
 
 services:
+  # --- Gateway ---
+  nginx-gateway:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: nginx-gateway
+    ports:
+      - "80:80"
+    networks:
+      - sretodo-net
+    depends_on:
+      - frontend-angular
+      - service-java-todo
+      - service-dotnet-statistik
+      - service-python-pomodoro
+    restart: unless-stopped
+
   # --- Application Services ---
 
   frontend-angular:
     container_name: frontend-angular
     build:
       context: ./frontend-angular
-      dockerfile: Dockerfile # Muss noch erstellt werden
-    ports:
-      - "4200:80" # Beispiel: Angular Dev Server Port zu Host Port 80 (oder 4200, je nach Dockerfile)
+      dockerfile: Dockerfile
     networks:
       - sretodo-net
     depends_on:
       - service-dotnet-statistik
       - service-python-pomodoro
-    environment:
-      # Beispiel: URLs für Backend-Services
-      - API_STATISTIK_URL=http://service-dotnet-statistik:8001
-      - API_POMODORO_URL=http://service-python-pomodoro:8002
 
   service-dotnet-statistik:
     container_name: service-dotnet-statistik
     build:
       context: ./service-dotnet-statistik
       dockerfile: Dockerfile
-    ports:
-      - "8001:8080"
     networks:
       - sretodo-net
     depends_on:
@@ -55,9 +64,7 @@ services:
     container_name: service-java-todo
     build:
       context: ./service-java-todo
-      dockerfile: Dockerfile # Muss noch erstellt werden
-    ports:
-      - "8080:8080" # Standard Spring Boot Port
+      dockerfile: Dockerfile
     networks:
       - sretodo-net
     depends_on:
@@ -65,31 +72,26 @@ services:
       - postgresql
     environment:
       - SERVER_PORT=8080
-      # OpenTelemetry Agent Konfiguration (über den -javaagent Schalter im Dockerfile aktiviert)
       - OTEL_SERVICE_NAME=service-java-todo
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318 # Collector OTLP HTTP Endpoint
-      - OTEL_METRICS_EXPORTER=otlp # An OTLP senden (oder none, da Prometheus scrapt)
-      - OTEL_LOGS_EXPORTER=otlp # Logs auch via OTLP senden
-      - OTEL_TRACES_EXPORTER=otlp # Traces via OTLP senden
-      - OTEL_INSTRUMENTATION_JDBC_ENABLED=true # Sicherstellen, dass DB-Aufrufe getraced werden
-      - otel.instrumentation.logback-appender.enabled=true # Logback-Appender aktivieren
-      # - JAVA_TOOL_OPTIONS=-javaagent:/app/opentelemetry-javaagent.jar # Nicht mehr hier nötig, da im Dockerfile ENTRYPOINT
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER=otlp
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_INSTRUMENTATION_JDBC_ENABLED=true
+      - otel.instrumentation.logback-appender.enabled=true
 
   service-python-pomodoro:
     container_name: service-python-pomodoro
     build:
       context: ./service-python-pomodoro
-      dockerfile: Dockerfile # Muss noch erstellt werden
-    ports:
-      - "8002:8002" # Port aus app.py
+      dockerfile: Dockerfile
     networks:
       - sretodo-net
     depends_on:
       - otel-collector
     environment:
       - PORT=8002
-      # OpenTelemetry Konfiguration
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318 # OTLP HTTP Endpoint
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
       - OTEL_SERVICE_NAME=service-python-pomodoro
       - OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true
 
@@ -97,9 +99,7 @@ services:
     container_name: service-go-healthcheck
     build:
       context: ./service-go-healthcheck
-      dockerfile: Dockerfile # Muss noch erstellt werden
-    ports:
-      - "8003:8003" # Port aus main.go
+      dockerfile: Dockerfile
     networks:
       - sretodo-net
     depends_on:
@@ -109,12 +109,10 @@ services:
       - otel-collector
     environment:
       - PORT=8003
-      # Zu prüfende Service URLs (Beispiele)
-      - CHECK_URL_STATISTIK=http://service-dotnet-statistik:8080/health # Annahme eines /health Endpunkts
-      - CHECK_URL_TODO=http://service-java-todo:8080/actuator/health # Standard Spring Boot Actuator
+      - CHECK_URL_STATISTIK=http://service-dotnet-statistik:8080/health
+      - CHECK_URL_TODO=http://service-java-todo:8080/actuator/health
       - CHECK_URL_POMODORO=http://service-python-pomodoro:8002/health
-      # OpenTelemetry Konfiguration
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318 # OTLP HTTP Endpoint
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
       - OTEL_SERVICE_NAME=service-go-healthcheck
 
   # --- Observability Stack ---
