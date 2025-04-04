@@ -1,8 +1,8 @@
 # Active Context: Observability MVP Demo App
 
-## 1. Current Focus
+## Aktueller Fokus
 
-Implementierung von OpenTelemetry im Angular Frontend.
+Der Hauptfokus liegt nun darauf, die gesamte Anwendung für das Deployment auf Kubernetes vorzubereiten. Das `docker-compose.yml` Setup funktioniert stabil, und alle Services (außer Go-Logging) senden Telemetriedaten.
 
 ## 2. Recent Activities
 
@@ -71,4 +71,25 @@ Implementierung von OpenTelemetry im Angular Frontend.
 
 - **Dokumentation:** `frontend-angular/README.md`, `activeContext.md`, `progress.md` aktualisieren.
 - **Git:** Aktuelle Änderungen committen und pushen.
-- **Überprüfung:** Funktion der Anwendung und Sichtbarkeit der Frontend-Traces in Tempo bestätigt. 
+- **Überprüfung:** Funktion der Anwendung und Sichtbarkeit der Frontend-Traces in Tempo bestätigt.
+
+## Letzte Änderungen
+
+- **Service Python Pomodoro:** Umstellung von manueller OTel SDK-Initialisierung auf den Agent-basierten Ansatz (`opentelemetry-instrument`). Dies löste hartnäckige `ModuleNotFoundError`-Probleme.
+    - `requirements.txt` verwendet jetzt `opentelemetry-distro`.
+    - `Dockerfile` führt `opentelemetry-bootstrap -a install` aus und startet die App mit `opentelemetry-instrument`.
+    - Manueller OTel-Code wurde aus `app.py` entfernt.
+    - `docker-compose.yml` um spezifische `OTEL_*_EXPORTER`-Variablen ergänzt.
+- **Diverse Services:** Korrekturen und Vervollständigung der OTel-Instrumentierung (Java, DotNet, Go (nur Traces)).
+- **Docker Compose:** Prometheus Image-Tag korrigiert.
+
+## Nächste Schritte Konkret
+
+1.  **Kubernetes-Manifeste:** Beginnen mit der Erstellung von grundlegenden Manifesten (Deployment, Service) für einen der Anwendungsdienste (z.B. `service-java-todo`) und den OTel-Collector.
+2.  **Konfiguration (ConfigMap):** Erstellen einer ConfigMap für den OTel-Collector in Kubernetes.
+3.  **Lokales K8s-Deployment:** Testen des Deployments dieser ersten Komponenten in einer lokalen K8s-Umgebung.
+
+## Offene Fragen / Entscheidungen
+
+- Soll das Go-Logging vor dem K8s-Deployment noch einmal versucht werden oder verschieben wir das?
+- Welche K8s-Distribution wird primär verwendet (minikube, k3d, Docker Desktop K8s)? (Beeinflusst Ingress etc.) 

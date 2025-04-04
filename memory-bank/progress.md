@@ -61,6 +61,38 @@
 -   Add more sophisticated backend logic (e.g., user accounts, real persistence).
 -   Prepare for Kubernetes deployment.
 
+## Projektstatus und Fortschritt
+
+### Was funktioniert:
+
+- **Gesamter Stack (Docker Compose):** Alle Services starten und sind über den Nginx-Gateway erreichbar (`http://localhost`).
+- **Frontend (Angular):** Basis-UI vorhanden, sendet OTel Traces.
+- **Service Java Todo:** Vollständig instrumentiert (Traces, Metrics, Logs), sendet Daten an Collector, Health-Check implementiert.
+- **Service DotNet Statistik:** Vollständig instrumentiert (Traces, Metrics, Logs), sendet Daten an Collector, Health-Check implementiert.
+- **Service Python Pomodoro:** Instrumentiert (Traces, Metrics, Logs) über **Agent-basierten Ansatz**, sendet Daten an Collector, Health-Check implementiert.
+- **Service Go Healthcheck:** Instrumentiert (nur Traces), sendet Daten an Collector, führt Health-Checks für andere Services aus.
+- **Observability Backend:**
+    - OTel Collector empfängt Daten von allen Services (HTTP).
+    - Prometheus sammelt Metriken vom Collector.
+    - Loki sammelt Logs vom Collector (Java, DotNet, Python).
+    - Tempo sammelt Traces vom Collector.
+    - Grafana ist konfiguriert, zeigt Datenquellen für Prometheus, Loki, Tempo an.
+
+### Was als Nächstes zu tun ist:
+
+1.  **(Optional):** Logging für `service-go-healthcheck` korrigieren/implementieren, sobald stabile OTel Go Logging Module verfügbar/identifiziert sind.
+2.  **Kubernetes-Deployment:**
+    - Basis-Manifeste für alle Services und Observability-Komponenten erstellen (Deployments, Services, ConfigMaps etc.).
+    - Ingress-Konfiguration für den Zugriff auf die Anwendung.
+    - Sicherstellen, dass OTel-Konfiguration (Service-Namen, Collector-Endpoint) in K8s korrekt gesetzt wird.
+    - Testen des Deployments in einer lokalen K8s-Umgebung (z.B. minikube, k3d, Docker Desktop K8s).
+3.  **Grafana Dashboards:** Vordefinierte Dashboards für die Services erstellen/anpassen (optional für MVP).
+
+### Bekannte Probleme:
+
+- **Go Service Logging:** OTel Logging für Go ist aufgrund von Modul-Inkompatibilitäten noch nicht implementiert.
+- **(Gelöst):** `service-python-pomodoro` startete nicht korrekt aufgrund von `ModuleNotFoundError` im OTel-Setup. Behoben durch Wechsel auf Agent-basierten Ansatz.
+
 ## Was funktioniert:
 
 - **Alle Services:** Starten erfolgreich im Docker Compose Setup.
