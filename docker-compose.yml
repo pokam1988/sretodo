@@ -113,6 +113,10 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
       - OTEL_SERVICE_NAME=service-python-pomodoro
       - OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER=otlp
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
 
   service-go-healthcheck:
     container_name: service-go-healthcheck
@@ -158,7 +162,7 @@ services:
       - postgresql
 
   prometheus:
-    image: prom/prometheus:v3.2.1
+    image: prom/prometheus:v2.53.1
     container_name: prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
