@@ -5,6 +5,15 @@ server:
 distributor:
   # receivers: [otlp, zipkin] # Aktiviere OTLP und Zipkin Receiver # <<< REMOVED / Kept commented out for 2.7.1
   # Limits können hier bei Bedarf hinzugefügt werden
+  receivers: # Korrekte Platzierung für 2.x
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+    zipkin:
+      endpoint: 0.0.0.0:9411
 
 ingester:
   trace_idle_period: 10s # traces werden nach 10s Inaktivität geflusht
@@ -22,30 +31,30 @@ storage:
   trace:
     backend: local # Lokales Dateisystem als Speicher
     local:
-      path: /tmp/tempo/blocks
+      path: /data/tempo/blocks
     wal:
-      path: /tmp/tempo/wal # Write-ahead-log für eingehende Spans
+      path: /data/tempo/wal # Write-ahead-log für eingehende Spans
       # buffer_size: 16_777_216        # (Optional) 16MiB buffer
       # checkpoint_threshold: 4_194_304 # (Optional) 4MiB checkpoint threshold
     pool:
       max_workers: 100 # Maximale Anzahl paralleler Anfragen
       queue_depth: 10000 # Warteschlangengröße für Anfragen
 
-# Top-level receivers block is correct for Tempo 2.x
-receivers:
-  otlp:
-    protocols:
-      grpc:
-        endpoint: 0.0.0.0:4317
-      http:
-        endpoint: 0.0.0.0:4318
-  zipkin:
-    endpoint: 0.0.0.0:9411
+# Top-level receivers block entfernen
+# receivers:
+#   otlp:
+#     protocols:
+#       grpc:
+#         endpoint: 0.0.0.0:4317
+#       http:
+#         endpoint: 0.0.0.0:4318
+#   zipkin:
+#     endpoint: 0.0.0.0:9411
 
 # Metrics generator moved to top level
 metrics_generator:
   storage:
-    path: /tmp/tempo/generator/wal
+    path: /data/tempo/generator/wal
     remote_write:
       - url: http://prometheus:9090/api/v1/write # Back to 'url' for 2.7.1
         send_exemplars: true

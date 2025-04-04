@@ -170,10 +170,11 @@ services:
   tempo:
     image: grafana/tempo:2.7.1
     container_name: tempo
+    user: "0"
     command: ["-config.file=/etc/tempo.yaml"]
     volumes:
-      - ./observability-stack/tempo-config.yaml:/etc/tempo.yaml # Muss noch erstellt werden
-      - tempo_data:/tmp/tempo
+      - ./observability-stack/tempo-config.yaml:/etc/tempo.yaml
+      - tempo_data:/data/tempo
     ports:
       - "3200:3200" # Tempo default port
       - "4317" # OTLP gRPC receiver (Tempo kann OTLP direkt empfangen)
