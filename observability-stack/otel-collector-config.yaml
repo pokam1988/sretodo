@@ -29,14 +29,10 @@ processors:
       - key: deployment.environment
         value: "development"
         action: upsert
-
-  attributes/logs:
-    # Kopiert das service.name Attribut von der Ressource zum Log Record
-    # Workaround, falls Loki das Ressource Attribut via OTLP nicht korrekt erkennt
-    actions:
-      - key: service.name # Ziel-Attribut im Log Record
-        from_attribute: resource.attributes["service.name"] # Quell-Attribut
-        action: upsert
+      # Hint für den (alten) Loki Exporter, um Resource Attribute als Labels zu nutzen
+      - key: loki.resource.labels
+        value: service.name
+        action: insert
 
 exporters:
   debug:
@@ -55,11 +51,15 @@ exporters:
     tls:
       insecure: true # Für lokale Entwicklung ohne TLS
 
-  otlphttp/loki:
-    # Sendet Logs an Loki via OTLP HTTP (Empfohlener Weg seit Loki v3)
-    endpoint: "http://loki:3100/otlp/v1/logs"
-    tls:
-      insecure: true
+  loki: # Alter Loki Exporter wieder hinzugefügt
+    endpoint: "http://loki:3100/loki/api/v1/push"
+    # Default Labels deaktivieren, da wir service.name über den Hint setzen
+    default_labels_enabled:
+      exporter: false
+      job: false
+      instance: false
+      level: false
+    # Wir brauchen kein explizites Label-Mapping hier, da der Hint im Prozessor genutzt wird
 
 service:
   telemetry:
@@ -81,8 +81,8 @@ service:
       exporters: [debug, prometheus] # Sendet an den Prometheus-Exporter
     logs:
       receivers: [otlp]
-      processors: [memory_limiter, batch, attributes/logs]
-      exporters: [debug, otlphttp/loki]
+      processors: [memory_limiter, batch, resource] # 'resource' Prozessor hinzugefügt!
+      exporters: [debug, loki] # Geändert zu 'loki'
 
 extensions:
   health_check:

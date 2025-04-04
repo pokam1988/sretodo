@@ -53,11 +53,11 @@ graph TD
 2.  **OpenTelemetry Collector (`otel-collector`):**
     *   Empfängt Daten auf Port `4318` (OTLP HTTP).
     *   Prozessiert die Daten (Batching, Memory Limiting, Ressourcenattribute hinzufügen).
-    *   **Exportiert Logs:** An Loki (`http://loki:3100/loki/api/v1/push`). Das OTel-Attribut `service.name` wird in das Loki-Label `service_name` konvertiert.
+    *   **Exportiert Logs:** An Loki (`http://loki:3100/loki/api/v1/push`) über den **alten `loki` Exporter**. Der `resource`-Prozessor wird verwendet, um das Ressourcenattribut `service.name` als Loki-Label `service.name` zu setzen (Hinweis: Punkt, kein Unterstrich!).
     *   **Exportiert Traces:** An Tempo (`http://tempo:4318`) via OTLP HTTP.
     *   **Exportiert Metriken:** An einen internen Prometheus Exporter (`otel-collector:8889`).
     *   Stellt eigene Metriken bereit (`otel-collector:8888`), die von Prometheus gescraped werden.
-3.  **Loki:** Empfängt Logs vom Collector und speichert sie.
+3.  **Loki:** Empfängt Logs vom Collector und speichert sie. Verwendet das Label `service.name` zur Identifizierung der Quelle.
 4.  **Tempo:** Empfängt Traces vom Collector und speichert sie.
 5.  **Prometheus Server:**
     *   Scrapt Metriken vom OTel Collector (`otel-collector:8889`).
@@ -69,16 +69,41 @@ graph TD
     *   Datenquellen werden automatisch über Provisioning (`./grafana/provisioning/datasources`) konfiguriert.
     *   Dashboards können über Provisioning (`./grafana/provisioning/dashboards`) bereitgestellt werden (Beispiel für Java-Service hinzugefügt).
     *   Erlaubt anonymen Zugriff (`GF_AUTH_ANONYMOUS_ENABLED=true`).
-    *   Ermöglicht die Korrelation von Traces zu Logs durch Konfiguration der Tempo-Datenquelle.
+    *   Ermöglicht die Korrelation von Traces zu Logs und Logs zu Traces durch Konfiguration der Tempo- und Loki-Datenquellen (siehe Abschnitt unten).
 
 ## Konfigurationsdateien
 
-*   **`otel-collector-config.yaml`**: Konfiguriert die Receiver, Prozessoren und Exporter des Collectors sowie die Pipelines für die verschiedenen Signale (Traces, Metriken, Logs).
-*   **`prometheus.yml`**: Definiert die Scraping-Jobs für Prometheus (welche Endpunkte sollen überwacht werden).
-*   **`tempo-config.yaml`**: Konfiguriert Tempo (Speicherort, Receiver etc.). Loki verwendet eine Standardkonfiguration.
-*   **`./grafana/provisioning/datasources/datasources.yaml`**: Definiert die Prometheus-, Loki- und Tempo-Datenquellen für Grafana und konfiguriert die Trace-zu-Logs-Verbindung.
+*   **`otel-collector-config.yaml`**: Konfiguriert die Receiver, Prozessoren (inkl. `resource` zur Loki-Label-Generierung) und Exporter (inkl. `loki` Exporter) des Collectors sowie die Pipelines.
+*   **`prometheus.yml`**: Definiert die Scraping-Jobs für Prometheus.
+*   **`tempo-config.yaml`**: Konfiguriert Tempo.
+*   **`./grafana/provisioning/datasources/datasources.yaml`**: Definiert die Prometheus-, Loki- und Tempo-Datenquellen für Grafana. **Hinweis:** Die Trace-Log-Korrelation wird manuell in der Grafana UI konfiguriert (siehe unten), nicht mehr über Provisioning in dieser Datei.
 *   **`./grafana/provisioning/dashboards/dashboard-provider.yaml`**: Konfiguriert Grafana, um Dashboards aus dem Verzeichnis zu laden.
 *   **`./grafana/provisioning/dashboards/service-java-todo.json`**: Beispiel-Dashboard für den Java ToDo Service.
+
+## Trace-Log-Korrelation in Grafana
+
+Um zwischen Traces in Tempo und Logs in Loki springen zu können, muss die Korrelation manuell in den Grafana Datenquellen konfiguriert werden:
+
+1.  **Tempo Datenquelle konfigurieren (Trace to Logs):**
+    *   Gehe zu "Administration" -> "Data sources" -> "Tempo".
+    *   Scrolle zu "Trace to logs".
+    *   Aktiviere die Funktion.
+    *   Wähle die Loki-Datenquelle aus.
+    *   Aktiviere "Filter by Trace ID" und "Filter by Span ID".
+    *   Füge unter "Tags" das Tag `service.name` hinzu und stelle sicher, dass es auf das Log Label `service.name` gemappt wird.
+    *   Speichere die Konfiguration ("Save & Test").
+
+2.  **Loki Datenquelle konfigurieren (Logs to Trace):**
+    *   Gehe zu "Administration" -> "Data sources" -> "Loki".
+    *   Scrolle zu "Derived Fields".
+    *   Klicke auf "Add".
+    *   **Matcher regex:** `traceID=(\\w+)` (oder an das Log-Format anpassen, falls die Trace ID anders erscheint).
+    *   **Name:** `TraceID`
+    *   **URL / query:** `${__value.raw}`
+    *   **Internal link:** Wähle die Tempo-Datenquelle aus.
+    *   Speichere die Konfiguration ("Save & Test").
+
+Nun sollte in der Tempo-Ansicht ein Icon erscheinen, um zu den Logs zu springen, und in der Loki-Ansicht die TraceID klickbar sein, um zum Trace zu gelangen.
 
 ## Wichtige Endpunkte & Ports (Host-Perspektive)
 

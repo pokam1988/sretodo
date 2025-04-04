@@ -61,5 +61,5 @@ graph LR
     -   Health-Check service periodically polls other services.
 -   **Telemetry Generation:** Each service generates metrics, traces, and logs during its operation.
 -   **Telemetry Collection:** Services send telemetry data to the OpenTelemetry Collector.
--   **Telemetry Processing & Export:** The Collector processes the data (e.g., adding attributes) and exports it to Prometheus (metrics), Tempo (traces), and Loki (logs).
--   **Visualization:** Grafana queries Prometheus, Tempo, and Loki to display dashboards and allow exploration of the observability data. 
+-   **Telemetry Processing & Export:** The Collector processes the data (e.g., adding attributes via `resource` processor for Loki labels) and exports it to Prometheus (metrics), Tempo (traces), and Loki (logs, using the `loki` exporter).
+-   **Visualization:** Grafana queries Prometheus, Tempo, and Loki to display dashboards and allow exploration of the observability data. Trace-Log correlation is configured manually within Grafana's data source settings. 
