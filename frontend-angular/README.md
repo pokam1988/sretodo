@@ -44,18 +44,22 @@ Das Frontend kommuniziert mit den Backend-Services über das Nginx Gateway unter
 
 Dieses Verzeichnis enthält die Angular-Frontend-Anwendung für die SRE ToDo Demo.
 
-## Funktionen
+## Funktionalität
 
--   Zeigt eine Liste von ToDos an.
+-   Zeigt eine Liste von ToDos an, die vom `service-java-todo` über das Nginx Gateway abgerufen werden.
+-   Zeigt Statistiken (aktuell nur die Anzahl der ToDos) vom `service-dotnet-statistik` an.
 -   Ermöglicht das Hinzufügen neuer ToDos.
 -   Ermöglicht das Umschalten des Erledigt-Status von ToDos.
 -   Ermöglicht das Löschen von ToDos.
--   **Neu:** Ermöglicht das Bearbeiten des Titels bestehender ToDos.
--   Zeigt einfache Statistiken (Gesamtzahl der ToDos) vom Statistik-Service an.
--   Zeigt den Status des Pomodoro-Timers an und ermöglicht das Starten/Stoppen.
--   Zeigt einen Countdown für laufende Pomodoro-Timer.
--   Navigationsleiste zum Umschalten zwischen ToDo-, Statistik- und Pomodoro-Ansicht.
--   Grundlegendes Fehlerhandling bei API-Aufrufen.
+-   Implementiert eine Pomodoro-Timer-Ansicht mit Start/Stop-Funktionalität und Countdown-Anzeige, gesteuert über `service-python-pomodoro`.
+-   **Neu:** Ermöglicht das Bearbeiten des Textes bestehender ToDos.
+
+## Implementierungsdetails
+
+-   Verwendet Angular.
+-   Kommuniziert mit den Backend-Services über HTTP-Anfragen an das Nginx Gateway (`/api/...`).
+-   **Refactoring:** Die Logik zur Kommunikation mit den Backend-APIs wurde aus der `AppComponent` in einen dedizierten `ApiService` (`api.service.ts`) ausgelagert, um die Komponentenlogik sauberer zu halten.
+-   OpenTelemetry ist **noch nicht** im Frontend integriert.
 
 ## Technische Details
 
