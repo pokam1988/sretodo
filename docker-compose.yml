@@ -9,6 +9,7 @@ volumes:
   grafana_data: {}
   loki_data: {}
   tempo_data: {}
+  postgres_data: {} # Volume für PostgreSQL Daten
 
 services:
   # --- Application Services ---
@@ -62,6 +63,7 @@ services:
       - sretodo-net
     depends_on:
       - otel-collector
+      - postgresql
     environment:
       - SERVER_PORT=8080
       # OpenTelemetry Konfiguration (via Agent oder SDK)
@@ -136,6 +138,7 @@ services:
       - prometheus
       - loki
       - tempo
+      - postgresql
 
   prometheus:
     image: prom/prometheus:v3.2.1
@@ -209,4 +212,21 @@ services:
       - prometheus
       - loki
       - tempo
+    restart: unless-stopped
+
+  # --- Datenbank ---
+
+  postgresql:
+    image: postgres:16-alpine
+    container_name: postgresql
+    environment:
+      POSTGRES_DB: sretodo_db
+      POSTGRES_USER: sretodo_user
+      POSTGRES_PASSWORD: sretodo_password # Passwort sollte sicherer gewählt werden!
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - sretodo-net
     restart: unless-stopped

@@ -1,3 +1,17 @@
+# Frontend (Angular)
+
+## Beschreibung
+
+Dieses Verzeichnis enthält das Angular Frontend für die SRE ToDo Demo App.
+
+## Entwicklungsschritte
+
+*(Hier werden die Implementierungsschritte dokumentiert)*
+
+1.  Initiales Projekt-Setup mit Angular CLI.
+2.  Dockerfile erstellt (Multi-Stage mit Nginx).
+3.  ...
+
 # FrontendAngular
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.17.

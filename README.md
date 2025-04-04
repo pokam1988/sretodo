@@ -20,6 +20,8 @@ Ziel ist es, eine Anwendung mit mehreren Microservices (Java, .NET, Python, Go, 
   - `loki`: Speicherung und Abfrage von Logs.
   - `tempo`: Speicherung und Abfrage von Traces.
   - `grafana`: Visualisierung der Daten aus Prometheus, Loki und Tempo.
+- **Datenbank (via Docker Compose):**
+  - `postgresql`: PostgreSQL Datenbank zur Persistenz der ToDo-Daten.
 
 ## Observability Stack Details
 
@@ -33,6 +35,14 @@ Ziel ist es, eine Anwendung mit mehreren Microservices (Java, .NET, Python, Go, 
 
 - **Grafana Datenquellen:** Werden über Provisioning in `observability-stack/grafana/provisioning/datasources/datasources.yaml` konfiguriert.
 - **Tempo Konfiguration:** Wurde angepasst, um mit Version `2.7.1` kompatibel zu sein und Berechtigungsprobleme durch Ausführung als `root` (nur lokal!) zu umgehen.
+
+## Datenbank Details
+
+| Komponente   | Image             | Version      | Konfiguration                                   |
+| ------------ | ----------------- | ------------ | ----------------------------------------------- |
+| PostgreSQL   | `postgres`        | `16-alpine`  | `docker-compose.yml` (env vars for DB/User/PW)  |
+
+- **ToDo Service Persistenz:** Der `service-java-todo` nutzt Spring Data JPA und den PostgreSQL-Treiber, um ToDos in der `postgresql`-Datenbank zu speichern.
 
 ## Starten der Anwendung
 

@@ -33,6 +33,7 @@
 
 -   **Containerization:** Docker
 -   **Local Orchestration:** Docker Compose
+-   **Datenbank:** PostgreSQL (`postgres:16-alpine` Image in Docker Compose)
 -   **Target Production Orchestration (Future):** Kubernetes / OpenShift
 -   **Source Code Management:** Git (Repository hosted on GitHub)
 -   **CI/CD (Future):** GitLab CI/CD (or GitHub Actions)
@@ -41,7 +42,8 @@
 
 -   **Language/Framework Versions:** Stick to the specified LTS or latest stable versions for consistency and support.
 -   **OpenTelemetry Integration:** Ensure all services correctly configure and export telemetry data to the central collector via OTLP HTTP (`http://otel-collector:4318`).
--   **Docker Compose Setup:** The `docker-compose.yml` defines all services, the collector, and the observability backends. `tempo` service runs as `root` (`user: \"0\"`) as a workaround for local volume permission issues.
+-   **Datenbank Integration:** `service-java-todo` ist konfiguriert für die Nutzung der PostgreSQL-Datenbank via Spring Data JPA. Das Schema wird durch `spring.jpa.hibernate.ddl-auto=update` verwaltet (nur für Entwicklung).
+-   **Docker Compose Setup:** The `docker-compose.yml` defines all services, the collector, the observability backends, and the PostgreSQL database. `tempo` service runs as `root` (`user: \"0\"`) as a workaround for local volume permission issues.
 -   **Inter-Service Communication:** Services need to resolve each other's addresses within the Docker Compose network (using service names).
 -   **Resource Management:** Keep resource footprints minimal for local development feasibility.
 -   **Structured Logging:** Implement structured logging (e.g., JSON) across all services to facilitate better parsing and querying in Loki.
