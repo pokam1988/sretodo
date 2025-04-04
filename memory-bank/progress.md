@@ -37,7 +37,8 @@
 2.  ~~**Docker Compose Build/Up:** Verify that all service images can be built and containers start.~~
 3.  ~~**OpenTelemetry Integration:** Configure and verify telemetry data flow from all services to the Collector and backends, including Trace-Log correlation.~~
 4.  ~~**Basic Service Logic:** Implement core functionality (ToDo CRUD, Pomodoro Timers, Statistik Aggregation (ToDo Count), Health Checks, Frontend Display).~~ (Basislogik ist drin, Frontend zeigt an)
-5.  **Grafana Dashboards:** Create basic dashboards for visualizing data.
+5.  **Grafana Dashboards:** ~~Create basic dashboards for visualizing data.~~ (Erstellt: Service-, Log-, Ressourcen-Übersicht via Provisioning) **<- Teilweise Erledigt**
+6.  **Fehlerbehebung Grafana Dashboards:** Untersuchen, warum provisionierte Dashboards "No Data" anzeigen.
 
 ## 4. Known Issues / Challenges
 
@@ -49,6 +50,7 @@
 -   **[Behoben]** .NET-Startprobleme (Workaround: Längere Wartezeit).
 -   **[Behoben]** CORS-Probleme (Gelöst durch Nginx Gateway).
 -   **[Behoben]** Nginx Gateway Start/Konfigurationsprobleme (Volume Mounts, Konfig-Fehler).
+-   **[Neu]** Grafana Dashboards (Service Overview, Log Overview, Resource Usage) zeigen "No Data". Ursache (Query, Datenfluss?) unklar.
 
 ## 5. Potential Next Steps / Refinements
 

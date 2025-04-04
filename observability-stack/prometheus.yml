@@ -18,6 +18,10 @@ scrape_configs:
     static_configs:
       - targets: ["service-java-todo:8080"]
 
+  - job_name: "cadvisor"
+    static_configs:
+      - targets: ["cadvisor:8080"]
+
   # Beispiel: Wenn der Go-Service direkt einen Prometheus-Endpunkt bereitstellen würde
   # - job_name: 'service-go-healthcheck'
   #   static_configs:

@@ -123,4 +123,31 @@ Der gesamte Stack wird über die Haupt-`docker-compose.yml` im Projekt-Root-Verz
 
 *   Starten/Erstellen: `docker-compose up -d --build`
 *   Stoppen: `docker-compose down`
-*   Stoppen & Volumes löschen: `docker-compose down -v` 
+*   Stoppen & Volumes löschen: `docker-compose down -v`
+
+### Grafana
+
+-   **URL:** http://localhost:3000
+-   **Login:** admin / admin
+-   **Konfiguration:**
+    -   Provisioning von Datenquellen (Prometheus, Loki, Tempo) via `grafana/provisioning/datasources/datasources.yaml`.
+    -   Trace-to-Log Korrelation von Tempo zu Loki ist konfiguriert.
+    -   Anonymer Lesezugriff ist aktiviert.
+    -   Dashboard Provisioning ist aktiviert via `grafana/provisioning/dashboards/dashboard-provider.yaml`.
+    -   Drei Dashboards wurden provisioniert (JSON-Dateien unter `grafana/provisioning/dashboards/`):
+        -   `Service Overview`: Zeigt RED-Metriken (Rate, Errors, Duration) für Services.
+        -   `Log Overview`: Zeigt Log-Raten und Fehler-Logs.
+        -   `Container Resource Usage`: Zeigt CPU- und Speichernutzung (benötigt cAdvisor).
+    -   **Bekanntes Problem:** Die provisionierten Dashboards zeigen aktuell "No Data". Die Metrik-/Log-Queries oder die Datenpipelines müssen noch überprüft und korrigiert werden.
+
+### cAdvisor
+
+-   Wurde hinzugefügt, um Container-Metriken (CPU, Speicher) zu sammeln.
+-   Wird von Prometheus unter dem Job `cadvisor` gescraped.
+
+## Nächste Schritte / TODOs
+
+-   [ ] **Fehlerbehebung Grafana Dashboards:** Untersuchen, warum die Dashboards "No Data" anzeigen.
+-   [ ] Kubernetes-Deployment vorbereiten.
+-   [ ] Frontend-Verbesserungen (ToDo Edit, Routing, OTel).
+-   [ ] Backend-Verbesserungen (Auth, Persistenz). 

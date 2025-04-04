@@ -32,8 +32,10 @@ Abschluss des MVPs, Behebung letzter Probleme und Planung nächster Schritte (z.
 15. ~~**Update Memory Bank & Commit (Pomodoro):**~~ **(Done)**
 16. ~~**Update Memory Bank & Commit (Statistik):**~~ **(Done)**
 17. ~~**Update Memory Bank & Commit (Healthcheck):**~~ **(Done)**
-18. **Update Memory Bank & Commit (Gateway & Frontend):** Den aktuellen Stand dokumentieren und committen. **<- YOU ARE HERE**
-19. **Define & Implement Next Feature/Refinement:** (z.B. Grafana Dashboards, ToDo Edit, UI Routing, Kubernetes Prep...)
+18. ~~**Update Memory Bank & Commit (Gateway & Frontend):**~~ **(Done)**
+19. ~~**Define & Implement Next Feature/Refinement:** (z.B. Grafana Dashboards, ToDo Edit, UI Routing, Kubernetes Prep...)~~ **(Done - Grafana Dashboards erstellt, cAdvisor hinzugefügt)**
+20. **Dokumentieren & Committen:** Aktuellen Stand (Dashboards, cAdvisor, bekannte Probleme) dokumentieren und committen. **<- YOU ARE HERE**
+21. **Fehlerbehebung / Nächster Schritt:** Fehler in Grafana Dashboards beheben oder nächstes Feature auswählen.
 
 ## 4. Open Questions / Decisions
 
@@ -42,4 +44,4 @@ Abschluss des MVPs, Behebung letzter Probleme und Planung nächster Schritte (z.
 
 ## 5. Blockers
 
--   None currently. 
+-   Grafana Dashboards zeigen "No Data". 

@@ -204,6 +204,21 @@ services:
       - sretodo-net
     restart: unless-stopped
 
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1 # Aktuelle Version prüfen
+    container_name: cadvisor
+    privileged: true # Nötig für Zugriff auf Docker-Infos
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports:
+      - "8081:8080" # cAdvisor UI (optional, kann bei Bedarf exposed werden)
+    networks:
+      - sretodo-net
+    restart: unless-stopped
+
   grafana:
     image: grafana/grafana:11.1.0
     container_name: grafana
