@@ -1,0 +1,50 @@
+<h2>Pomodoro Timer</h2>
+
+<!-- Error Message Display -->
+<div *ngIf="error" class="error-message">
+  {{ error }}
+</div>
+
+<div class="pomodoro-view">
+  <div *ngIf="pomodoroState; else noTimer">
+    <p>Aktueller Timer (für {{ pomodoroState.user_id }}):</p>
+    <div class="pomodoro-status">
+      <p>Typ: {{ pomodoroState.timer_type | uppercase }}</p>
+      <p>Status: {{ pomodoroState.is_running ? "Läuft" : "Gestoppt" }}</p>
+      <p *ngIf="pomodoroState.is_running">
+        Endet am: {{ pomodoroState.end_time | date : "mediumTime" }}
+      </p>
+      <p
+        *ngIf="pomodoroState.is_running && pomodoroRemainingTime"
+        class="countdown"
+      >
+        Verbleibend: {{ pomodoroRemainingTime }}
+      </p>
+    </div>
+  </div>
+  <ng-template #noTimer>
+    <p>Kein aktiver Timer für Benutzer '{{ pomodoroUserId }}'.</p>
+  </ng-template>
+
+  <div class="pomodoro-controls">
+    <button
+      (click)="startPomodoro(25, 'work')"
+      [disabled]="pomodoroState?.is_running"
+    >
+      Start Work (25 min)
+    </button>
+    <button
+      (click)="startPomodoro(5, 'break')"
+      [disabled]="pomodoroState?.is_running"
+    >
+      Start Break (5 min)
+    </button>
+    <button
+      class="stop"
+      (click)="stopPomodoro()"
+      [disabled]="!pomodoroState?.is_running"
+    >
+      Stop Timer
+    </button>
+  </div>
+</div>

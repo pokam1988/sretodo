@@ -56,9 +56,11 @@ Dieses Verzeichnis enthält die Angular-Frontend-Anwendung für die SRE ToDo Dem
 
 ## Implementierungsdetails
 
--   Verwendet Angular.
--   Kommuniziert mit den Backend-Services über HTTP-Anfragen an das Nginx Gateway (`/api/...`).
--   **Refactoring:** Die Logik zur Kommunikation mit den Backend-APIs wurde aus der `AppComponent` in einen dedizierten `ApiService` (`api.service.ts`) ausgelagert, um die Komponentenlogik sauberer zu halten.
+-   Verwendet Angular mit Standalone Components.
+-   **Routing:** Nutzt das Angular Routing Modul (`provideRouter`, `app.routes.ts`, `RouterOutlet`, `RouterLink`, `RouterLinkActive`) um zwischen den Ansichten ToDo, Pomodoro und Statistik zu navigieren. Die Logik für die einzelnen Ansichten wurde in dedizierte Komponenten ausgelagert (`TodoComponent`, `PomodoroComponent`, `StatisticsComponent`).
+-   **Styling:** Globale Styles (Layout, Header, Footer) sind in `src/styles.scss` definiert. Komponenten-spezifische Styles befinden sich in den jeweiligen `.scss`-Dateien der Komponenten.
+-   Kommuniziert mit den Backend-Services über HTTP-Anfragen an das Nginx Gateway (`/api/...`) mittels eines zentralen `ApiService` (`api.service.ts`).
+-   **Modelle:** Verwendet Interfaces (`Todo`, `PomodoroState`, `Statistics`) definiert in `models.ts`.
 -   OpenTelemetry ist **noch nicht** im Frontend integriert.
 
 ## Technische Details

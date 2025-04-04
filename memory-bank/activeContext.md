@@ -2,7 +2,7 @@
 
 ## 1. Current Focus
 
-Abschluss des MVPs, Behebung letzter Probleme und Planung nächster Schritte (z.B. Grafana Dashboards, Verfeinerungen, Kubernetes).
+Dokumentation und Commit der Frontend-Routing-Implementierung.
 
 ## 2. Recent Activities
 
@@ -38,7 +38,10 @@ Abschluss des MVPs, Behebung letzter Probleme und Planung nächster Schritte (z.
 21. ~~**Fehlerbehebung / Nächster Schritt:** Fehler in Grafana Dashboards beheben oder nächstes Feature auswählen.~~ **(Nächstes Feature ausgewählt: ToDo Edit + Refactoring)**
 22. ~~**Implementieren & Testen:** ToDo Edit-Funktion im Frontend implementieren und API-Service refaktorieren.~~ **(Done)**
 23. ~~**Dokumentieren & Committen:** Aktuellen Stand (ToDo Edit, Refactoring) dokumentieren und committen.~~ **(Done)**
-24. **Nächster Schritt auswählen:** (z.B. Frontend Routing, Frontend OTel, Backend Logic, Kubernetes Prep, Dashboard Fix...) **<- YOU ARE HERE**
+24. ~~**Nächster Schritt auswählen:** (z.B. Frontend Routing, Frontend OTel, Backend Logic, Kubernetes Prep, Dashboard Fix...)~~ **(Frontend Routing ausgewählt)**
+25. ~~**Implementieren & Testen:** Angular Routing im Frontend implementieren.~~ **(Done)**
+26. **Dokumentieren & Committen:** Aktuellen Stand (Frontend Routing, Style Fixes) dokumentieren und committen. **<- YOU ARE HERE**
+27. **Nächster Schritt auswählen:** (z.B. Frontend OTel, Backend Logic, Kubernetes Prep, Dashboard Fix...)
 
 ## 4. Open Questions / Decisions
 
