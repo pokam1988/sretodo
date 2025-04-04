@@ -1,0 +1,27 @@
+# .cursorrules for Observability MVP Demo App
+
+## Project Intelligence & Patterns
+
+*   **Memory Bank Usage:** ALWAYS read all core Memory Bank files (`projectbrief.md`, `productContext.md`, `systemPatterns.md`, `techContext.md`, `activeContext.md`, `progress.md`) at the start of each session/task.
+*   **Documentation Updates:** Update Memory Bank (especially `activeContext.md` and `progress.md`) after significant changes or discoveries. Use `update memory bank` command for full reviews.
+*   **Language:** Respond and generate code comments primarily in German, as per `AI-PROMPT.md`.
+*   **Clarity for Juniors:** Ensure explanations and instructions are detailed enough for junior DevOps engineers, as specified in `AI-PROMPT.md`.
+*   **Focus:** Prioritize implementing the simplified MVP (no auth) deployable via Docker Compose first, then target Kubernetes.
+*   **Technology Choices:** Adhere to the technologies and versions specified in `techContext.md`.
+*   **Observability:** Ensure OpenTelemetry is correctly implemented in all services, data flows to the collector, and backends (Prometheus, Tempo, Loki) are configured.
+*   **Docker Compose:** Maintain a working `docker-compose.yml` as a primary deliverable for local execution.
+
+## User Preferences & Workflow
+
+*   *(To be filled in as preferences emerge)*
+
+## Known Challenges & Solutions
+
+*   *(To be filled in as challenges arise)*
+
+## Tool Usage Patterns
+
+*   Use `edit_file` to create/modify files.
+*   Use `run_terminal_cmd` for generating project structures, running builds, etc.
+*   Use `list_dir` for exploring file structure.
+*   Use `read_file` to gather context before editing. 
