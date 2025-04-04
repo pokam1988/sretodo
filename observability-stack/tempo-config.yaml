@@ -3,7 +3,8 @@ server:
   http_listen_port: 3200
 
 distributor:
-  receivers: [otlp, zipkin] # Aktiviere OTLP und Zipkin Receiver
+  # receivers: [otlp, zipkin] # Aktiviere OTLP und Zipkin Receiver
+  # Limits können hier bei Bedarf hinzugefügt werden
 
 ingester:
   trace_idle_period: 10s # traces werden nach 10s Inaktivität geflusht
@@ -40,17 +41,24 @@ receivers:
   zipkin:
     endpoint: 0.0.0.0:9411
 
-# Override für lokale Entwicklung
-overrides:
-  # Kurze Intervalle für schnelles Feedback lokal
-  ingestion_burst_size: 10000
-  ingestion_rate_limit: 10000
-  max_traces_per_user: 10000
-  # Kurze Retention für lokale Entwicklung
-  defaults:
-    metrics_generator:
-      storage:
-        path: /tmp/tempo/generator/wal
-        remote_write:
-          - url: http://prometheus:9090/api/v1/write
-            send_exemplars: true
+# Metrics generator moved to top level
+metrics_generator:
+  storage:
+    path: /tmp/tempo/generator/wal
+    remote_write:
+      - url: http://prometheus:9090/api/v1/write
+        send_exemplars: true
+# Override für lokale Entwicklung - Entfernt/Auskommentiert für Tempo 2.7.1
+# overrides:
+#   # Kurze Intervalle für schnelles Feedback lokal
+#   ingestion_burst_size: 10000
+#   ingestion_rate_limit: 10000
+#   max_traces_per_user: 10000
+#   # Kurze Retention für lokale Entwicklung
+#   defaults:
+#     metrics_generator:
+#       storage:
+#         path: /tmp/tempo/generator/wal
+#         remote_write:
+#           - url: http://prometheus:9090/api/v1/write
+#             send_exemplars: true

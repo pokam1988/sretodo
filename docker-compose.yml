@@ -118,7 +118,7 @@ services:
   # --- Observability Stack ---
 
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.104.0 # Verwende Contrib für mehr Exporter/Receiver
+    image: otel/opentelemetry-collector-contrib:0.123.0 # Verwende Contrib für mehr Exporter/Receiver
     container_name: otel-collector
     command: ["--config=/etc/otelcol-contrib/otel-collector-config.yaml"]
     volumes:
@@ -138,7 +138,7 @@ services:
       - tempo
 
   prometheus:
-    image: prom/prometheus:v2.53.0
+    image: prom/prometheus:v3.2.1
     container_name: prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
@@ -156,7 +156,7 @@ services:
     restart: unless-stopped
 
   loki:
-    image: grafana/loki:3.1.0
+    image: grafana/loki:3.4.2
     container_name: loki
     command: -config.file=/etc/loki/local-config.yaml
     ports:
@@ -168,7 +168,7 @@ services:
     restart: unless-stopped
 
   tempo:
-    image: grafana/tempo:2.5.0
+    image: grafana/tempo:2.7.1
     container_name: tempo
     command: ["-config.file=/etc/tempo.yaml"]
     volumes:
