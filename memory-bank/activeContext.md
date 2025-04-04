@@ -2,7 +2,7 @@
 
 ## 1. Current Focus
 
-Dokumentation und Commit der Frontend-Routing-Implementierung.
+Implementierung von OpenTelemetry im Angular Frontend.
 
 ## 2. Recent Activities
 
@@ -40,8 +40,11 @@ Dokumentation und Commit der Frontend-Routing-Implementierung.
 23. ~~**Dokumentieren & Committen:** Aktuellen Stand (ToDo Edit, Refactoring) dokumentieren und committen.~~ **(Done)**
 24. ~~**Nächster Schritt auswählen:** (z.B. Frontend Routing, Frontend OTel, Backend Logic, Kubernetes Prep, Dashboard Fix...)~~ **(Frontend Routing ausgewählt)**
 25. ~~**Implementieren & Testen:** Angular Routing im Frontend implementieren.~~ **(Done)**
-26. **Dokumentieren & Committen:** Aktuellen Stand (Frontend Routing, Style Fixes) dokumentieren und committen. **<- YOU ARE HERE**
-27. **Nächster Schritt auswählen:** (z.B. Frontend OTel, Backend Logic, Kubernetes Prep, Dashboard Fix...)
+26. ~~**Dokumentieren & Committen:** Aktuellen Stand (Frontend Routing, Style Fixes) dokumentieren und committen.~~ **(Done)**
+27. ~~**Nächster Schritt auswählen:** (z.B. Frontend OTel, Backend Logic, Kubernetes Prep, Dashboard Fix...)~~ **(Frontend OTel ausgewählt)**
+28. **Implementieren & Testen:** OpenTelemetry im Frontend hinzufügen. **<- YOU ARE HERE**
+29. **Dokumentieren & Committen:** Aktuellen Stand (Frontend OTel) dokumentieren und committen.
+30. **Nächster Schritt auswählen:** ...
 
 ## 4. Open Questions / Decisions
 
@@ -50,4 +53,22 @@ Dokumentation und Commit der Frontend-Routing-Implementierung.
 
 ## 5. Blockers
 
--   Grafana Dashboards zeigen "No Data". 
+-   Grafana Dashboards zeigen "No Data".
+
+## Current Work Focus
+
+- Implementierung der OpenTelemetry-Instrumentierung für den `frontend-angular` Service.
+
+## Recent Changes
+
+- **Frontend-OTel:** OpenTelemetry-Abhängigkeiten hinzugefügt (`@opentelemetry/api`, `@opentelemetry/sdk-trace-web`, `@opentelemetry/exporter-trace-otlp-http`, etc.).
+- **Frontend-OTel:** Konfiguration (`tracing.ts`) erstellt und in `main.ts` initialisiert.
+- **Frontend-OTel:** Notwendige Instrumentierungen (DocumentLoad, Fetch, XHR) hinzugefügt.
+- **OTel-Collector:** CORS-Einstellungen in `otel-collector-config.yaml` angepasst, um Anfragen vom Frontend (`localhost`) zu erlauben.
+- **Frontend-OTel:** Fehlerbehebung im Build-Prozess durch Korrektur der OTel-Paketversionen und Synchronisation der `package-lock.json`.
+
+## Next Steps
+
+- **Dokumentation:** `frontend-angular/README.md`, `activeContext.md`, `progress.md` aktualisieren.
+- **Git:** Aktuelle Änderungen committen und pushen.
+- **Überprüfung:** Funktion der Anwendung und Sichtbarkeit der Frontend-Traces in Tempo bestätigt. 

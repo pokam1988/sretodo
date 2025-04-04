@@ -61,7 +61,7 @@ Dieses Verzeichnis enthält die Angular-Frontend-Anwendung für die SRE ToDo Dem
 -   **Styling:** Globale Styles (Layout, Header, Footer) sind in `src/styles.scss` definiert. Komponenten-spezifische Styles befinden sich in den jeweiligen `.scss`-Dateien der Komponenten.
 -   Kommuniziert mit den Backend-Services über HTTP-Anfragen an das Nginx Gateway (`/api/...`) mittels eines zentralen `ApiService` (`api.service.ts`).
 -   **Modelle:** Verwendet Interfaces (`Todo`, `PomodoroState`, `Statistics`) definiert in `models.ts`.
--   OpenTelemetry ist **noch nicht** im Frontend integriert.
+-   **OpenTelemetry:** Ist integriert, um Traces für Seitenaufrufe, Klicks und HTTP-Anfragen (Fetch/XHR) zu generieren. Die Konfiguration erfolgt in `src/app/tracing.ts` und wird in `src/main.ts` initialisiert.
 
 ## Technische Details
 
@@ -83,10 +83,10 @@ Das Frontend wird als Teil des gesamten Stacks mit `docker-compose up` gebaut un
 
 ## Nächste Schritte / TODOs
 
--   [ ] Korrekte Implementierung von Angular Routing anstelle von `*ngIf` für die Ansichten.
--   [ ] OpenTelemetry-Instrumentierung hinzufügen.
 -   [ ] UI/UX-Verbesserungen.
--   [ ] Auslagern der Interfaces in eigene Dateien (`models.ts`).
+-   [x] OpenTelemetry-Instrumentierung hinzufügen.
+-   [x] Korrekte Implementierung von Angular Routing anstelle von `*ngIf` für die Ansichten.
+-   [x] Auslagern der Interfaces in eigene Dateien (`models.ts`).
 
 # FrontendAngular
 

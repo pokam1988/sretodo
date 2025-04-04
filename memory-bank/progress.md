@@ -59,4 +59,28 @@
 -   Improve Frontend UI/UX (e.g., proper routing instead of *ngIf).
 -   Add OpenTelemetry instrumentation to Angular Frontend.
 -   Add more sophisticated backend logic (e.g., user accounts, real persistence).
--   Prepare for Kubernetes deployment. 
+-   Prepare for Kubernetes deployment.
+
+## Was funktioniert:
+
+- **Alle Services:** Starten erfolgreich im Docker Compose Setup.
+- **Frontend:** Zeigt Todos, Pomodoro, Statistiken an. Kann Todos hinzufügen, löschen, bearbeiten und Status ändern. Nutzt korrektes Routing.
+- **Backend Services:** Stellen korrekte Daten bereit.
+- **Observability Stack:** Läuft (Collector, Prometheus, Tempo, Loki, Grafana).
+- **OTel Collector:** Empfängt Daten von allen **Backend**-Services und dem **Frontend**.
+- **Tempo:** Zeigt Traces von allen **Backend**-Services und dem **Frontend** an. Verteilte Traces sind sichtbar.
+- **Loki:** Zeigt Logs von allen Services an.
+- **Prometheus:** Sammelt Metriken von allen **Backend**-Services und dem Collector.
+- **Grafana:** Zeigt Traces (Tempo), Logs (Loki) und Metriken (Prometheus) an. Dashboards müssen noch angepasst werden.
+- **API Gateway (Nginx):** Leitet Anfragen korrekt an die Backend-Services weiter.
+
+## Was noch fehlt / Nächste Schritte:
+
+- **Grafana Dashboards:** Anpassen/Erstellen spezifischer Dashboards zur Visualisierung der gesammelten Daten (Metriken, Traces, Logs).
+- **Weitere Metriken:** Implementierung spezifischer Geschäfts-/Anwendungsmetriken in den Services.
+- **Kubernetes-Deployment:** Vorbereitung und Durchführung des Deployments auf Kubernetes.
+- **Dokumentation:** Kontinuierliche Pflege der Memory Bank und READMEs.
+
+## Bekannte Probleme:
+
+- **Grafana Dashboards:** Die vorimportierten Dashboards zeigen teilweise "No Data", da die Metrik-Namen oder Labels nicht exakt übereinstimmen. Müssen angepasst werden. 
