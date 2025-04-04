@@ -50,7 +50,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   currentView: 'todos' | 'statistics' | 'pomodoro' = 'todos'; // Startansicht
 
-  private todoApiUrl = '/api/todos';
+  private todoApiUrl = '/api/todos/';
   private statsApiUrl = '/api/statistics';
   private pomodoroApiUrl = '/api/pomodoro/timers';
 
@@ -98,18 +98,20 @@ export class AppComponent implements OnInit, OnDestroy {
   addTodo(): void {
     if (!this.newTodoTitle.trim()) return;
     this.error = null;
-    const newTodo = { title: this.newTodoTitle, completed: false };
+    const newTodoPayload = { title: this.newTodoTitle, completed: false };
 
-    this.http.post<Todo>(this.todoApiUrl, newTodo).subscribe({
+    this.http.post<Todo>(this.todoApiUrl, newTodoPayload).subscribe({
       next: (addedTodo) => {
         console.log('ToDo added:', addedTodo);
-        this.loadTodos();
+        this.todos.push(addedTodo);
+        this.todos.sort((a, b) => a.id - b.id);
         this.newTodoTitle = '';
         this.loadStatistics();
       },
       error: (err) => {
         console.error('Error adding todo:', err);
-        this.error = 'Could not add ToDo. Check CORS or if service is running.';
+        this.error =
+          'Could not add ToDo. Check API endpoint or if service is running.';
       },
     });
   }

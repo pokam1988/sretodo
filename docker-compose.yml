@@ -23,10 +23,14 @@ services:
     networks:
       - sretodo-net
     depends_on:
-      - frontend-angular
-      - service-java-todo
-      - service-dotnet-statistik
-      - service-python-pomodoro
+      frontend-angular:
+        condition: service_started
+      service-java-todo:
+        condition: service_healthy
+      service-dotnet-statistik:
+        condition: service_started
+      service-python-pomodoro:
+        condition: service_started
     restart: unless-stopped
 
   # --- Application Services ---
@@ -68,8 +72,10 @@ services:
     networks:
       - sretodo-net
     depends_on:
-      - otel-collector
-      - postgresql
+      otel-collector:
+        condition: service_started
+      postgresql:
+        condition: service_started
     environment:
       - SERVER_PORT=8080
       - OTEL_SERVICE_NAME=service-java-todo
@@ -79,6 +85,19 @@ services:
       - OTEL_TRACES_EXPORTER=otlp
       - OTEL_INSTRUMENTATION_JDBC_ENABLED=true
       - otel.instrumentation.logback-appender.enabled=true
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--spider",
+          "--quiet",
+          "http://localhost:8080/actuator/health",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   service-python-pomodoro:
     container_name: service-python-pomodoro
