@@ -36,7 +36,7 @@ processors:
     actions:
       - key: service.name # Ziel-Attribut im Log Record
         from_attribute: resource.attributes["service.name"] # Quell-Attribut
-        action: insert
+        action: upsert
 
 exporters:
   debug:
