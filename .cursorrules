@@ -10,6 +10,7 @@
 *   **Technology Choices:** Adhere to the technologies and versions specified in `techContext.md`.
 *   **Observability:** Ensure OpenTelemetry is correctly implemented in all services, data flows to the collector, and backends (Prometheus, Tempo, Loki) are configured.
 *   **Docker Compose:** Maintain a working `docker-compose.yml` as a primary deliverable for local execution.
+*   **Commit & Push Frequency:** Create structured, descriptive commits after each logical step or significant change and push them to the current GitHub branch.
 
 ## User Preferences & Workflow
 
@@ -22,6 +23,6 @@
 ## Tool Usage Patterns
 
 *   Use `edit_file` to create/modify files.
-*   Use `run_terminal_cmd` for generating project structures, running builds, etc.
+*   Use `run_terminal_cmd` for generating project structures, running builds, git operations, etc.
 *   Use `list_dir` for exploring file structure.
 *   Use `read_file` to gather context before editing. 
