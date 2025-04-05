@@ -17,8 +17,8 @@ spec:
         {{- include "sretodo.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: postgres
     spec:
-      securityContext:
-        fsGroup: 999
+      # OpenShift compatible security context
+      securityContext: {}
       containers:
         - name: {{ .Chart.Name }}-postgres
           image: "{{ .Values.sretodoPostgres.image.repository }}:{{ .Values.sretodoPostgres.image.tag | default "14-alpine" }}"
@@ -27,6 +27,23 @@ spec:
             - name: postgres
               containerPort: 5432
               protocol: TCP
+          # Add health checks
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - $(POSTGRES_USER)
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - $(POSTGRES_USER)
+            initialDelaySeconds: 5
+            periodSeconds: 5
           env:
             - name: POSTGRES_USER
               valueFrom:
@@ -40,10 +57,12 @@ spec:
                   key: POSTGRES_PASSWORD
             - name: POSTGRES_DB
               value: {{ .Values.sretodoPostgres.env.POSTGRES_DB }}
+            # Allow write permissions for OpenShift
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
-              subPath: postgres
       volumes:
         - name: postgres-data
           {{- if .Values.sretodoPostgres.persistence.enabled }}
