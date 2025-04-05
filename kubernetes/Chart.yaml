@@ -1,0 +1,8 @@
+apiVersion: v2
+name: sretodo
+description: SRE ToDo MVP Demo Anwendung
+version: 0.1.0
+appVersion: "0.1.0"
+type: application
+maintainers:
+  - name: Mistral-valaise
