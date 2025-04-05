@@ -1,13 +1,13 @@
-{{- if .Values.sretodoPythonPomodoro.enabled }}
+{{- if .Values.pythonPomodoro.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sretodo-python-pomodoro
+  name: {{ .Release.Name }}-python-pomodoro
   labels:
     {{- include "sretodo.labels" . | nindent 4 }}
     app.kubernetes.io/component: python-pomodoro
 spec:
-  replicas: {{ .Values.sretodoPythonPomodoro.replicaCount }}
+  replicas: {{ .Values.pythonPomodoro.replicas }}
   selector:
     matchLabels:
       {{- include "sretodo.selectorLabels" . | nindent 6 }}
@@ -19,11 +19,16 @@ spec:
         app.kubernetes.io/component: python-pomodoro
     spec:
       # OpenShift compatible security context
-      securityContext: {}
+      securityContext:
+        fsGroup: 1000
       containers:
-        - name: {{ .Chart.Name }}-python-pomodoro
-          image: "{{ .Values.sretodoPythonPomodoro.image.repository }}:{{ .Values.sretodoPythonPomodoro.image.tag | default "latest" }}"
-          imagePullPolicy: {{ .Values.sretodoPythonPomodoro.image.pullPolicy }}
+        - name: python-pomodoro
+          image: "{{ .Values.pythonPomodoro.image }}:{{ .Values.pythonPomodoro.tag }}"
+          imagePullPolicy: {{ .Values.pythonPomodoro.pullPolicy }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
           ports:
             - name: http
               containerPort: 8000
@@ -31,43 +36,35 @@ spec:
           # Add health checks
           livenessProbe:
             httpGet:
-              path: /health/live
+              path: /health
               port: http
-            initialDelaySeconds: 60
+            initialDelaySeconds: 30
             periodSeconds: 20
           readinessProbe:
             httpGet:
-              path: /health/ready
+              path: /health
               port: http
-            initialDelaySeconds: 30
+            initialDelaySeconds: 15
             periodSeconds: 10
           env:
-            - name: DATABASE_URL
-              value: postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@sretodo-postgres:5432/sretodo
-            - name: POSTGRES_USER
-              valueFrom:
-                secretKeyRef:
-                  name: sretodo-postgres-secret
-                  key: POSTGRES_USER
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: sretodo-postgres-secret
-                  key: POSTGRES_PASSWORD
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: http://sretodo-otel-collector:4317
+              value: http://{{ .Release.Name }}-otel-collector:4317
+            - name: TODO_SERVICE_URL
+              value: http://{{ .Release.Name }}-java-todo:8080
+          resources:
+            {{- toYaml .Values.pythonPomodoro.resources | nindent 12 }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: sretodo-python-pomodoro
+  name: {{ .Release.Name }}-python-pomodoro
   labels:
     {{- include "sretodo.labels" . | nindent 4 }}
     app.kubernetes.io/component: python-pomodoro
 spec:
-  type: {{ .Values.sretodoPythonPomodoro.service.type }}
+  type: {{ .Values.pythonPomodoro.service.type }}
   ports:
-    - port: {{ .Values.sretodoPythonPomodoro.service.port }}
+    - port: 8000
       targetPort: http
       protocol: TCP
       name: http

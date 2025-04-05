@@ -1,116 +1,144 @@
-# Default values for SRE ToDo MVP Demo
+# Default values for SRE Todo Helm chart
 
-# Frontend Angular Application
-sretodoFrontend:
+# Frontend Configuration
+frontend:
   enabled: true
-  image:
-    repository: nginxinc/nginx-unprivileged
-    tag: stable-alpine
-    pullPolicy: IfNotPresent
-  replicaCount: 1
+  replicas: 1
+  image: ghcr.io/eliasschrei/sretodo-frontend
+  tag: latest
+  pullPolicy: Always
   service:
     type: ClusterIP
-    port: 80 # Service port remains 80 (external interface)
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
 
 # Java Todo Service
-sretodoJavaTodo:
-  enabled: false # Disable until image available
-  image:
-    repository: ghcr.io/mistral-valaise/sretodo-java-todo
-    tag: latest
-    pullPolicy: IfNotPresent
-  replicaCount: 1
+javaTodo:
+  enabled: false
+  replicas: 1
+  image: ghcr.io/eliasschrei/sretodo-service-java-todo
+  tag: latest
+  pullPolicy: Always
   service:
     type: ClusterIP
-    port: 8080
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
 
-# .NET Statistics Service
-sretodoDotnetStatistik:
-  enabled: false # Disable until image available
-  image:
-    repository: ghcr.io/mistral-valaise/sretodo-dotnet-statistik
-    tag: latest
-    pullPolicy: IfNotPresent
-  replicaCount: 1
+# .NET Statistik Service
+dotnetStatistik:
+  enabled: false
+  replicas: 1
+  image: ghcr.io/eliasschrei/sretodo-service-dotnet-statistik
+  tag: latest
+  pullPolicy: Always
   service:
     type: ClusterIP
-    port: 5000
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
 
 # Python Pomodoro Service
-sretodoPythonPomodoro:
-  enabled: false # Disable until image available
-  image:
-    repository: ghcr.io/mistral-valaise/sretodo-python-pomodoro
-    tag: latest
-    pullPolicy: IfNotPresent
-  replicaCount: 1
+pythonPomodoro:
+  enabled: false
+  replicas: 1
+  image: ghcr.io/eliasschrei/sretodo-service-python-pomodoro
+  tag: latest
+  pullPolicy: Always
   service:
     type: ClusterIP
-    port: 8000
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
 
 # PostgreSQL Database
-sretodoPostgres:
+postgres:
   enabled: true
-  image:
-    repository: postgres
-    tag: 14-alpine
-    pullPolicy: IfNotPresent
+  replicas: 1
+  image: postgres
+  tag: "13"
+  pullPolicy: IfNotPresent
   service:
     type: ClusterIP
-    port: 5432
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
   persistence:
     enabled: true
     size: 1Gi
   env:
-    POSTGRES_USER: admin
-    POSTGRES_PASSWORD: secret
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
     POSTGRES_DB: sretodo
 
-# Observability Stack (OpenTelemetry, Prometheus, Tempo, Loki, Grafana)
-sretodoObservability:
+# Observability Stack
+observabilityStack:
   enabled: true
-  otelcollector:
-    enabled: true
-    image:
-      repository: otel/opentelemetry-collector-contrib
-      tag: latest
-      pullPolicy: IfNotPresent
+
+  # OpenTelemetry Collector
+  otelCollector:
+    image: otel/opentelemetry-collector-contrib
+    tag: latest
+    pullPolicy: Always
+
+  # Prometheus
   prometheus:
-    enabled: true
-    image:
-      repository: prom/prometheus
-      tag: latest
-      pullPolicy: IfNotPresent
+    image: prom/prometheus
+    tag: latest
+    pullPolicy: Always
+
+  # Tempo
   tempo:
-    enabled: true
-    image:
-      repository: grafana/tempo
-      tag: latest
-      pullPolicy: IfNotPresent
+    image: grafana/tempo
+    tag: latest
+    pullPolicy: Always
+
+  # Loki
   loki:
-    enabled: true
-    image:
-      repository: grafana/loki
-      tag: latest
-      pullPolicy: IfNotPresent
+    image: grafana/loki
+    tag: latest
+    pullPolicy: Always
+
+  # Grafana
   grafana:
-    enabled: true
-    image:
-      repository: grafana/grafana
-      tag: latest
-      pullPolicy: IfNotPresent
-    service:
-      type: ClusterIP
-      port: 3000
-    adminPassword: prom-operator
+    image: grafana/grafana
+    tag: latest
+    pullPolicy: Always
 
 # NGINX Gateway
-sretodoNginxGateway:
+nginxGateway:
   enabled: true
-  image:
-    repository: nginxinc/nginx-unprivileged
-    tag: stable-alpine
-    pullPolicy: IfNotPresent
+  replicas: 1
+  image: nginx
+  tag: "alpine"
+  pullPolicy: IfNotPresent
   service:
     type: ClusterIP
-    port: 80 # Service port remains 80 (external interface)
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi

@@ -1,12 +1,13 @@
+{{- if .Values.postgres.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sretodo-postgres
+  name: {{ .Release.Name }}-postgres
   labels:
     {{- include "sretodo.labels" . | nindent 4 }}
     app.kubernetes.io/component: postgres
 spec:
-  replicas: 1
+  replicas: {{ .Values.postgres.replicas }}
   selector:
     matchLabels:
       {{- include "sretodo.selectorLabels" . | nindent 6 }}
@@ -18,11 +19,16 @@ spec:
         app.kubernetes.io/component: postgres
     spec:
       # OpenShift compatible security context
-      securityContext: {}
+      securityContext:
+        fsGroup: 26
       containers:
-        - name: {{ .Chart.Name }}-postgres
-          image: "{{ .Values.sretodoPostgres.image.repository }}:{{ .Values.sretodoPostgres.image.tag | default "14-alpine" }}"
-          imagePullPolicy: {{ .Values.sretodoPostgres.image.pullPolicy }}
+        - name: postgres
+          image: "{{ .Values.postgres.image }}:{{ .Values.postgres.tag }}"
+          imagePullPolicy: {{ .Values.postgres.pullPolicy }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 26
+            runAsGroup: 26
           ports:
             - name: postgres
               containerPort: 5432
@@ -46,37 +52,33 @@ spec:
             periodSeconds: 5
           env:
             - name: POSTGRES_USER
-              valueFrom:
-                secretKeyRef:
-                  name: sretodo-postgres-secret
-                  key: POSTGRES_USER
+              value: {{ .Values.postgres.env.POSTGRES_USER }}
             - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: sretodo-postgres-secret
-                  key: POSTGRES_PASSWORD
+              value: {{ .Values.postgres.env.POSTGRES_PASSWORD }}
             - name: POSTGRES_DB
-              value: {{ .Values.sretodoPostgres.env.POSTGRES_DB }}
+              value: {{ .Values.postgres.env.POSTGRES_DB }}
             # Allow write permissions for OpenShift
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
+          resources:
+            {{- toYaml .Values.postgres.resources | nindent 12 }}
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
       volumes:
         - name: postgres-data
-          {{- if .Values.sretodoPostgres.persistence.enabled }}
+          {{- if .Values.postgres.persistence.enabled }}
           persistentVolumeClaim:
-            claimName: sretodo-postgres-pvc
+            claimName: {{ .Release.Name }}-postgres-pvc
           {{- else }}
           emptyDir: {}
           {{- end }}
 ---
-{{- if .Values.sretodoPostgres.persistence.enabled }}
+{{- if .Values.postgres.persistence.enabled }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: sretodo-postgres-pvc
+  name: {{ .Release.Name }}-postgres-pvc
   labels:
     {{- include "sretodo.labels" . | nindent 4 }}
     app.kubernetes.io/component: postgres
@@ -85,23 +87,24 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: {{ .Values.sretodoPostgres.persistence.size }}
+      storage: {{ .Values.postgres.persistence.size }}
 {{- end }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: sretodo-postgres
+  name: {{ .Release.Name }}-postgres
   labels:
     {{- include "sretodo.labels" . | nindent 4 }}
     app.kubernetes.io/component: postgres
 spec:
-  type: ClusterIP
+  type: {{ .Values.postgres.service.type }}
   ports:
-    - port: {{ .Values.sretodoPostgres.service.port }}
+    - port: 5432
       targetPort: postgres
       protocol: TCP
       name: postgres
   selector:
     {{- include "sretodo.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: postgres
+{{- end }}

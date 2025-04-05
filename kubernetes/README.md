@@ -1,75 +1,128 @@
-# Kubernetes Deployment (Helm)
+# SRE Todo Kubernetes Helm Chart
 
-Dieses Verzeichnis enthält die Helm-Charts für die Bereitstellung der SRE ToDo MVP Demo Anwendung auf Kubernetes.
+This Helm chart deploys the SRE Todo application with OpenTelemetry observability in a Kubernetes cluster.
 
-## Struktur
+## Prerequisites
 
-- `charts/`: Enthält die einzelnen Sub-Charts für jeden Service und die Observability-Komponenten.
-    - `sretodo-frontend/`
-    - `sretodo-java-todo/`
-    - `sretodo-dotnet-statistik/`
-    - `sretodo-python-pomodoro/`
-    - `sretodo-go-healthcheck/` (Derzeit nicht aktiv genutzt, da Health Checks in K8s anders gelöst werden können)
-    - `sretodo-nginx-gateway/`
-    - `sretodo-observability/` (Bündelt Collector, Prometheus, Tempo, Loki, Grafana)
-    - `sretodo-postgres/`
-- `templates/`: Enthält übergreifende Templates (aktuell nicht genutzt).
-- `Chart.yaml`: Das Haupt-Chart, das alle Sub-Charts als Abhängigkeiten definiert.
-- `values.yaml`: Konfigurationswerte für das Haupt-Chart und die Sub-Charts.
+- Kubernetes 1.19+
+- Helm 3.2.0+
 
-## Voraussetzungen
+## Getting Started
 
-- Ein laufender Kubernetes-Cluster (z.B. minikube, k3d, Docker Desktop Kubernetes).
-- `kubectl` Kommandozeilen-Tool installiert und konfiguriert.
-- `helm` Kommandozeilen-Tool installiert.
+### Installation
 
-## Bereitstellung
+1. Clone this repository:
+```bash
+git clone https://github.com/your-organization/sretodo.git
+cd sretodo/kubernetes
+```
 
-1.  **Namespace erstellen (optional, aber empfohlen):**
-    ```bash
-    kubectl create namespace sretodo-demo
-    ```
+2. Install the Helm chart:
+```bash
+helm install sretodo . -f values.yaml
+```
 
-2.  **Secrets erstellen (für PostgreSQL):**
-    Erstelle ein Secret für die PostgreSQL-Zugangsdaten. Das `values.yaml` erwartet ein Secret namens `sretodo-postgres-secret` mit den Schlüsseln `POSTGRES_USER` und `POSTGRES_PASSWORD`.
-    ```bash
-    kubectl create secret generic sretodo-postgres-secret --from-literal=POSTGRES_USER=admin --from-literal=POSTGRES_PASSWORD=secret -n sretodo-demo
-    ```
-    *(Passe die Werte entsprechend an, falls nötig)*
+To customize the installation, you can either edit the `values.yaml` file or provide overrides on the command line:
 
-3.  **Helm-Chart installieren:**
-    Navigiere in das `kubernetes` Verzeichnis im Terminal.
-    ```bash
-    cd kubernetes
-    helm install sretodo-release . -n sretodo-demo
-    ```
-    *(Ersetze `sretodo-release` durch den gewünschten Release-Namen und `sretodo-demo` durch den gewählten Namespace)*
+```bash
+helm install sretodo . -f values.yaml --set frontend.replicas=2
+```
 
-    Dieser Befehl installiert alle Sub-Charts und erstellt die notwendigen Kubernetes-Ressourcen (Deployments, Services, ConfigMaps, Secrets (indirekt), Ingress etc.).
+### Deployment on OpenShift
 
-4.  **Zugriff auf die Anwendung:**
-    Nachdem alle Pods gestartet sind (überprüfe mit `kubectl get pods -n sretodo-demo`), kannst du auf die Anwendung zugreifen. Die Zugriffsmethode hängt von deiner Kubernetes-Distribution und der Konfiguration des Ingress-Controllers ab.
-    -   **Lokales Kubernetes (minikube, Docker Desktop):** Oft ist der Nginx Gateway Service direkt über `http://localhost/` erreichbar. Wenn du `minikube tunnel` oder Port-Forwarding verwendest:
-        ```bash
-        kubectl port-forward svc/sretodo-nginx-gateway 8080:80 -n sretodo-demo
-        ```
-        Zugriff dann über `http://localhost:8080/`.
-    -   **Andere Cluster:** Finde die externe IP oder den Hostnamen des Ingress-Controllers heraus:
-        ```bash
-        kubectl get ingress -n sretodo-demo
-        ```
+The Helm chart has been optimized for OpenShift deployment:
 
-5.  **Zugriff auf Grafana:**
-    Grafana ist normalerweise über einen separaten Port oder Ingress erreichbar. Finde den Service oder Ingress:
-    ```bash
-    kubectl get svc -n sretodo-demo | grep grafana
-    kubectl get ingress -n sretodo-demo | grep grafana # (Falls ein Ingress konfiguriert ist)
-    ```
-    Verwende Port-Forwarding, falls nötig:
-    ```bash
-    kubectl port-forward svc/sretodo-grafana 3000:80 -n sretodo-demo
-    ```
-    Zugriff dann über `http://localhost:3000/`. Standard-Login ist `admin`/`prom-operator`.
+1. All containers are configured to run as non-root users
+2. Frontend and NGINX gateway use port 8080 instead of port 80
+3. SecurityContext is set to ensure proper permissions
+
+To deploy on OpenShift:
+
+```bash
+helm install sretodo . -f values.yaml
+```
+
+## Architecture
+
+The SRE Todo application consists of the following components:
+
+- **Frontend**: Angular-based web interface
+- **Java Todo Service**: Backend service for managing todos
+- **PostgreSQL**: Database for storing todos
+- **NGINX Gateway**: API gateway for frontend and services
+- **Observability Stack**:
+  - OpenTelemetry Collector
+  - Prometheus
+  - Tempo
+  - Loki
+  - Grafana
+
+## Configuration
+
+### Enabling/Disabling Components
+
+Each component can be enabled or disabled through the `enabled` flag in the `values.yaml` file. For example:
+
+```yaml
+frontend:
+  enabled: true
+
+javaTodo:
+  enabled: true
+
+dotnetStatistik:
+  enabled: false
+
+pythonPomodoro:
+  enabled: false
+```
+
+### Component Configuration
+
+Each component allows configuration of:
+
+- Image repository and tag
+- Number of replicas
+- Resource limits and requests
+- Service type
+- Environment variables (where applicable)
+
+See the `values.yaml` file for all available configuration options.
+
+## Security
+
+All components are configured to run as non-root users with the minimum required permissions.
+
+## Observability
+
+The observability stack is enabled by default and includes:
+
+- **OpenTelemetry Collector**: Collects metrics, traces, and logs
+- **Prometheus**: Stores and queries metrics
+- **Tempo**: Stores and queries traces
+- **Loki**: Stores and queries logs
+- **Grafana**: Provides dashboards for visualizing all telemetry data
+
+Access the Grafana dashboard at `http://<cluster-ip>:<port>/grafana` (get the service IP with `kubectl get svc`).
+
+## Troubleshooting
+
+If you encounter issues with the deployment:
+
+1. Check the status of the Pods:
+```bash
+kubectl get pods
+```
+
+2. Check the logs of a specific Pod:
+```bash
+kubectl logs <pod-name>
+```
+
+3. If a Pod is not starting, describe it for more details:
+```bash
+kubectl describe pod <pod-name>
+```
 
 ## CI/CD mit GitHub Actions
 
@@ -80,10 +133,6 @@ Die Bereitstellung auf einem Kubernetes/OpenShift-Cluster wird automatisch durch
 3.  Wird das Helm-Chart mit `helm upgrade --install` auf dem Zielcluster (konfiguriert über Secrets `OPENSHIFT_SERVER`, `OPENSHIFT_TOKEN`, `OPENSHIFT_NAMESPACE`) angewendet, wobei die neu gebauten Image-Tags verwendet werden.
 
 Eine manuelle Bereitstellung ist weiterhin möglich (siehe Abschnitt "Bereitstellung"), aber der automatisierte Workflow ist der bevorzugte Weg für Updates.
-
-## Konfiguration
-
-Die Konfiguration erfolgt hauptsächlich über die `values.yaml`-Datei im Hauptchart (`kubernetes/values.yaml`) und den entsprechenden `values.yaml`-Dateien in den Sub-Charts (`kubernetes/charts/*/values.yaml`). Hier können z.B. Image-Tags, Replica Counts, Ressourcenlimits und spezifische Service-Einstellungen angepasst werden.
 
 ## Deinstallation
 

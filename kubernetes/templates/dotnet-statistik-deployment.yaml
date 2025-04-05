@@ -1,13 +1,13 @@
-{{- if .Values.sretodoDotnetStatistik.enabled }}
+{{- if .Values.dotnetStatistik.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sretodo-dotnet-statistik
+  name: {{ .Release.Name }}-dotnet-statistik
   labels:
     {{- include "sretodo.labels" . | nindent 4 }}
     app.kubernetes.io/component: dotnet-statistik
 spec:
-  replicas: {{ .Values.sretodoDotnetStatistik.replicaCount }}
+  replicas: {{ .Values.dotnetStatistik.replicas }}
   selector:
     matchLabels:
       {{- include "sretodo.selectorLabels" . | nindent 6 }}
@@ -19,11 +19,16 @@ spec:
         app.kubernetes.io/component: dotnet-statistik
     spec:
       # OpenShift compatible security context
-      securityContext: {}
+      securityContext:
+        fsGroup: 1000
       containers:
-        - name: {{ .Chart.Name }}-dotnet-statistik
-          image: "{{ .Values.sretodoDotnetStatistik.image.repository }}:{{ .Values.sretodoDotnetStatistik.image.tag | default "latest" }}"
-          imagePullPolicy: {{ .Values.sretodoDotnetStatistik.image.pullPolicy }}
+        - name: dotnet-statistik
+          image: "{{ .Values.dotnetStatistik.image }}:{{ .Values.dotnetStatistik.tag }}"
+          imagePullPolicy: {{ .Values.dotnetStatistik.pullPolicy }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
           ports:
             - name: http
               containerPort: 5000
@@ -31,43 +36,37 @@ spec:
           # Add health checks
           livenessProbe:
             httpGet:
-              path: /health/liveness
+              path: /health
               port: http
-            initialDelaySeconds: 60
+            initialDelaySeconds: 30
             periodSeconds: 20
           readinessProbe:
             httpGet:
-              path: /health/readiness
+              path: /health
               port: http
-            initialDelaySeconds: 30
+            initialDelaySeconds: 15
             periodSeconds: 10
           env:
-            - name: ConnectionStrings__DefaultConnection
-              value: Host=sretodo-postgres;Port=5432;Database=sretodo;Username=$(POSTGRES_USER);Password=$(POSTGRES_PASSWORD)
-            - name: POSTGRES_USER
-              valueFrom:
-                secretKeyRef:
-                  name: sretodo-postgres-secret
-                  key: POSTGRES_USER
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: sretodo-postgres-secret
-                  key: POSTGRES_PASSWORD
+            - name: TodoServiceUrl
+              value: http://{{ .Release.Name }}-java-todo:8080
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: http://sretodo-otel-collector:4317
+              value: http://{{ .Release.Name }}-otel-collector:4317
+            - name: ASPNETCORE_URLS
+              value: http://0.0.0.0:5000
+          resources:
+            {{- toYaml .Values.dotnetStatistik.resources | nindent 12 }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: sretodo-dotnet-statistik
+  name: {{ .Release.Name }}-dotnet-statistik
   labels:
     {{- include "sretodo.labels" . | nindent 4 }}
     app.kubernetes.io/component: dotnet-statistik
 spec:
-  type: {{ .Values.sretodoDotnetStatistik.service.type }}
+  type: {{ .Values.dotnetStatistik.service.type }}
   ports:
-    - port: {{ .Values.sretodoDotnetStatistik.service.port }}
+    - port: 5000
       targetPort: http
       protocol: TCP
       name: http

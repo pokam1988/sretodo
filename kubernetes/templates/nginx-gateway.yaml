@@ -71,47 +71,35 @@ data:
   default.conf: |
     server {
         listen 8080;
-        server_name _;
+        server_name localhost;
 
-        # Frontend
         location / {
-            proxy_pass http://sretodo-frontend:8080;
+            proxy_pass http://{{ .Release.Name }}-frontend;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
         }
 
-        {{- if .Values.sretodoJavaTodo.enabled }}
-        # Java Todo API
-        location /api/todos/ {
-            proxy_pass http://sretodo-java-todo:8080/;
+        {{- if .Values.javaTodo.enabled }}
+        location /api/todos {
+            proxy_pass http://{{ .Release.Name }}-java-todo:8080;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
         }
         {{- end }}
 
-        {{- if .Values.sretodoDotnetStatistik.enabled }}
-        # .NET Statistik API
-        location /api/statistik/ {
-            proxy_pass http://sretodo-dotnet-statistik:5000/;
+        {{- if .Values.dotnetStatistik.enabled }}
+        location /api/statistik {
+            proxy_pass http://{{ .Release.Name }}-dotnet-statistik:80;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
         }
         {{- end }}
 
-        {{- if .Values.sretodoPythonPomodoro.enabled }}
-        # Python Pomodoro API
-        location /api/pomodoro/ {
-            proxy_pass http://sretodo-python-pomodoro:8000/;
+        {{- if .Values.pythonPomodoro.enabled }}
+        location /api/pomodoro {
+            proxy_pass http://{{ .Release.Name }}-python-pomodoro:8000;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
         }
         {{- end }}
     }

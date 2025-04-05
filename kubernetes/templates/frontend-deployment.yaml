@@ -1,52 +1,51 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sretodo-frontend
+  name: {{ .Release.Name }}-frontend
   labels:
-    {{- include "sretodo.labels" . | nindent 4 }}
-    app.kubernetes.io/component: frontend
+    app: sretodo
+    component: frontend
 spec:
-  replicas: {{ .Values.sretodoFrontend.replicaCount }}
+  replicas: {{ .Values.frontend.replicas }}
   selector:
     matchLabels:
-      {{- include "sretodo.selectorLabels" . | nindent 6 }}
-      app.kubernetes.io/component: frontend
+      app: sretodo
+      component: frontend
   template:
     metadata:
       labels:
-        {{- include "sretodo.selectorLabels" . | nindent 8 }}
-        app.kubernetes.io/component: frontend
+        app: sretodo
+        component: frontend
     spec:
-      # OpenShift compatible security context
-      securityContext: {}
       containers:
-        - name: {{ .Chart.Name }}-frontend
-          image: "{{ .Values.sretodoFrontend.image.repository }}:{{ .Values.sretodoFrontend.image.tag | default "stable-alpine" }}"
-          imagePullPolicy: {{ .Values.sretodoFrontend.image.pullPolicy }}
-          ports:
-            - name: http
-              containerPort: 8080
-              protocol: TCP
-          # Add health checks
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 8080
-            initialDelaySeconds: 10
-            periodSeconds: 5
-          volumeMounts:
-            - name: nginx-cache
-              mountPath: /var/cache/nginx
-            - name: nginx-run
-              mountPath: /var/run
-            - name: nginx-tmp
-              mountPath: /tmp
+      - name: frontend
+        image: {{ .Values.frontend.image }}:{{ .Values.frontend.tag }}
+        imagePullPolicy: {{ .Values.frontend.pullPolicy }}
+        ports:
+        - containerPort: 8080
+          name: http
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 101  # nginx user in nginx image
+        resources:
+          limits:
+            cpu: {{ .Values.frontend.resources.limits.cpu }}
+            memory: {{ .Values.frontend.resources.limits.memory }}
+          requests:
+            cpu: {{ .Values.frontend.resources.requests.cpu }}
+            memory: {{ .Values.frontend.resources.requests.memory }}
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 20
+          periodSeconds: 30
       volumes:
         - name: nginx-cache
           emptyDir: {}
@@ -58,17 +57,17 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: sretodo-frontend
+  name: {{ .Release.Name }}-frontend
   labels:
-    {{- include "sretodo.labels" . | nindent 4 }}
-    app.kubernetes.io/component: frontend
+    app: sretodo
+    component: frontend
 spec:
-  type: {{ .Values.sretodoFrontend.service.type }}
+  type: {{ .Values.frontend.service.type }}
   ports:
-    - port: {{ .Values.sretodoFrontend.service.port }}
-      targetPort: http
-      protocol: TCP
-      name: http
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+    name: http
   selector:
-    {{- include "sretodo.selectorLabels" . | nindent 4 }}
-    app.kubernetes.io/component: frontend
+    app: sretodo
+    component: frontend
