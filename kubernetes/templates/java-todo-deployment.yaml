@@ -1,3 +1,4 @@
+{{- if .Values.sretodoJavaTodo.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,6 +18,8 @@ spec:
         {{- include "sretodo.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: java-todo
     spec:
+      # OpenShift compatible security context
+      securityContext: {}
       containers:
         - name: {{ .Chart.Name }}-java-todo
           image: "{{ .Values.sretodoJavaTodo.image.repository }}:{{ .Values.sretodoJavaTodo.image.tag | default "latest" }}"
@@ -25,6 +28,19 @@ spec:
             - name: http
               containerPort: 8080
               protocol: TCP
+          # Add health checks
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
           env:
             - name: SPRING_DATASOURCE_URL
               value: jdbc:postgresql://sretodo-postgres:5432/sretodo
@@ -58,3 +74,4 @@ spec:
   selector:
     {{- include "sretodo.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: java-todo
+{{- end }}
