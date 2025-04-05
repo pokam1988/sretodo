@@ -8,11 +8,13 @@ receivers:
         endpoint: 0.0.0.0:4318
         cors:
           allowed_origins:
-            - "http://localhost:4200" # Für lokale Entwicklung mit ng serve
-            - "http://127.0.0.1:4200"
-            - "http://localhost" # Für Zugriff über Nginx Gateway
-            - "http://127.0.0.1" # Sicherheitshalber
-          # allowed_headers: ["*] # Standard sollte reichen
+            - "*" # Alle Ursprünge erlauben
+          allowed_headers:
+            - "*" # Alle Header erlauben
+          exposed_headers:
+            - "*" # Alle Header exponieren
+          allow_credentials: true
+          max_age: 7200
           # expose_headers: ["*] # Standard sollte reichen
 
 processors:

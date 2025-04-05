@@ -1,0 +1,195 @@
+{{- if .Values.nginxGateway.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "sretodo-chart.fullname" . }}-nginx-gateway-config
+  labels:
+    {{- include "sretodo-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nginx-gateway
+data:
+  default.conf: |
+    # Inhalt für nginx/default.conf (angepasst für Kubernetes Services)
+
+    # Upstream-Definitionen sind für K8s Services nicht nötig,
+    # wir verwenden direkt die Service-Namen.
+
+    server {
+        listen 80;
+        server_name _;
+
+        # Logging (optional)
+        access_log /var/log/nginx/host.access.log;
+        error_log /var/log/nginx/host.error.log warn;
+
+        # API Endpunkte weiterleiten
+        # Wir verwenden die internen K8s Service DNS-Namen
+
+        # 1. Alle Todo-Anfragen mit korrektem Pfad
+        location /api/todos/ {
+            proxy_pass http://{{ include "sretodo-chart.fullname" . }}-java-todo:{{ .Values.serviceJavaTodo.service.port }}/todos;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_redirect off;
+            
+            # CORS Header
+            add_header 'Access-Control-Allow-Origin' '*' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With' always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
+            
+            if ($request_method = OPTIONS) {
+                return 204;
+            }
+        }
+
+        # Fallback für Todo ohne Slash am Ende (für POST requests)
+        location = /api/todos {
+            proxy_pass http://{{ include "sretodo-chart.fullname" . }}-java-todo:{{ .Values.serviceJavaTodo.service.port }}/todos;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_redirect off;
+            
+            # CORS Header
+            add_header 'Access-Control-Allow-Origin' '*' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With' always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
+            
+            if ($request_method = OPTIONS) {
+                return 204;
+            }
+        }
+
+        # Spezifische Todos mit ID (für PUT/GET/DELETE Anfragen an /api/todos/{id})
+        location ~ ^/api/todos/([0-9]+)$ {
+            proxy_pass http://{{ include "sretodo-chart.fullname" . }}-java-todo:{{ .Values.serviceJavaTodo.service.port }}/todos/$1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_redirect off;
+            
+            # CORS Header
+            add_header 'Access-Control-Allow-Origin' '*' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With' always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
+            
+            if ($request_method = OPTIONS) {
+                return 204;
+            }
+        }
+
+        location /api/statistics {
+            proxy_pass http://{{ include "sretodo-chart.fullname" . }}-dotnet-statistik:{{ .Values.serviceDotnetStatistik.service.port }}/statistics;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_redirect off;
+            
+            # CORS Header
+            add_header 'Access-Control-Allow-Origin' '*' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With' always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
+            
+            if ($request_method = OPTIONS) {
+                return 204;
+            }
+        }
+
+        # Direkter Zugriff ohne /api Präfix
+        location = /statistics {
+            proxy_pass http://{{ include "sretodo-chart.fullname" . }}-dotnet-statistik:{{ .Values.serviceDotnetStatistik.service.port }}/statistics;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_redirect off;
+            
+            # CORS Header
+            add_header 'Access-Control-Allow-Origin' '*' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With' always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
+            
+            if ($request_method = OPTIONS) {
+                return 204;
+            }
+        }
+
+        location /api/pomodoro/ {
+            # Rewrite ist hier wichtig, um /api/pomodoro/ zu entfernen
+            rewrite ^/api/pomodoro/(.*)$ /$1 break;
+            proxy_pass http://{{ include "sretodo-chart.fullname" . }}-python-pomodoro:{{ .Values.servicePythonPomodoro.service.port }};
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_redirect off;
+            
+            # CORS Header
+            add_header 'Access-Control-Allow-Origin' '*' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With' always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
+            
+            if ($request_method = OPTIONS) {
+                return 204;
+            }
+        }
+
+        # OTel-Collector Endpunkte direkt weitergeben
+        location /v1/traces {
+            proxy_pass http://{{ include "sretodo-chart.fullname" . }}-otel-collector:4318/v1/traces;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_redirect off;
+            
+            # CORS-Header für non-OPTIONS Anfragen
+            add_header 'Access-Control-Allow-Origin' '*' always;
+            add_header 'Access-Control-Allow-Methods' 'POST, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With' always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
+            
+            if ($request_method = OPTIONS) {
+                return 204;
+            }
+        }
+
+        # Frontend Location
+        location / {
+            proxy_pass http://{{ include "sretodo-chart.fullname" . }}-frontend-angular:{{ .Values.frontendAngular.service.port }};
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_redirect off;
+            proxy_intercept_errors on;
+            error_page 404 = @fallback;
+        }
+
+        # Fallback für Angular Routing
+        location @fallback {
+             # URI in proxy_pass entfernen für named location
+             proxy_pass http://{{ include "sretodo-chart.fullname" . }}-frontend-angular:{{ .Values.frontendAngular.service.port }};
+             # Setze den Request URI explizit für den Upstream
+             proxy_set_header X-Rewrite-URI /index.html; # Header als Hinweis
+             rewrite .* /index.html break; # Interne Umschreibung
+
+             # Original Header beibehalten
+             proxy_set_header Host $host;
+             proxy_set_header X-Real-IP $remote_addr;
+             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+             proxy_set_header X-Forwarded-Proto $scheme;
+             proxy_redirect off;
+        }
+    }
+{{- end }} 

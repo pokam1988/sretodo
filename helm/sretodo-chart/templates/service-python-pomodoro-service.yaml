@@ -1,0 +1,19 @@
+{{- if .Values.servicePythonPomodoro.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "sretodo-chart.fullname" . }}-python-pomodoro
+  labels:
+    {{- include "sretodo-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: python-pomodoro
+spec:
+  type: {{ .Values.servicePythonPomodoro.service.type }}
+  ports:
+    - port: {{ .Values.servicePythonPomodoro.service.port }}
+      targetPort: http # Name des Ports im Deployment
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "sretodo-chart.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: python-pomodoro
+{{- end }} 

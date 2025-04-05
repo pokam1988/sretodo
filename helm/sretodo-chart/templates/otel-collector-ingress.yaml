@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "sretodo-chart.fullname" . }}-otel-collector-ingress
+  labels:
+    {{- include "sretodo-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: otel-collector
+  annotations:
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "POST, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "*"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: {{ .Values.ingress.host | default "localhost" }}
+    http:
+      paths:
+      - path: /v1/traces
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "sretodo-chart.fullname" . }}-otel-collector
+            port:
+              number: 4318 

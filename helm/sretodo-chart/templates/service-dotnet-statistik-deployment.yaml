@@ -1,0 +1,94 @@
+{{- if .Values.serviceDotnetStatistik.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sretodo-chart.fullname" . }}-dotnet-statistik
+  labels:
+    {{- include "sretodo-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: dotnet-statistik
+spec:
+  replicas: {{ .Values.serviceDotnetStatistik.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "sretodo-chart.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: dotnet-statistik
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      # Add timestamp annotation to force update
+      annotations:
+        rollme: "{{ randAlphaNum 10 }}" # Force update
+      labels:
+        {{- include "sretodo-chart.labels" . | nindent 8 }}
+        app.kubernetes.io/component: dotnet-statistik
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "sretodo-chart.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}-dotnet-statistik
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.serviceDotnetStatistik.image.repository }}:{{ .Values.serviceDotnetStatistik.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.serviceDotnetStatistik.service.port }} # Port aus Values (ASP.NET Core Standard)
+              protocol: TCP
+          env:
+            - name: ASPNETCORE_URLS
+              value: "http://+:{{ .Values.serviceDotnetStatistik.service.port }}"
+            # - name: OTEL_SERVICE_NAME # <<< Auskommentieren
+            #  value: "service-dotnet-statistik"
+            # - name: OTEL_EXPORTER_OTLP_ENDPOINT # <<< Auskommentieren
+            #  # Verweist auf den Service des OTel Collector Sub-Charts
+            #  value: {{ .Values.config.otel.collectorEndpointHttp }}
+            # # - name: OTEL_DOTNET_AUTO_LOGS_INCLUDE_FORMATTED_MESSAGE # <<< Ist bereits auskommentiert
+            # #  value: "true"
+            # Service Discovery für den Todo Service:
+            - name: TODO_SERVICE_HOST
+              value: "{{ include "sretodo-chart.fullname" . }}-java-todo"
+            - name: TODO_SERVICE_PORT
+              value: "{{ .Values.serviceJavaTodo.service.port }}"
+            - name: TODO_SERVICE_URL
+              # Baut die interne K8s Service URL zusammen mit korrektem Namen
+              value: "http://{{ include "sretodo-chart.fullname" . }}-java-todo:{{ .Values.serviceJavaTodo.service.port }}/todos"
+          # Liveness/Readiness Probes (Annahme: /health Endpunkt existiert)
+          # Ggf. spezifischere Pfade anpassen, falls verfügbar
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 45
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }} 

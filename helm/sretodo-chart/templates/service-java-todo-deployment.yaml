@@ -1,0 +1,102 @@
+{{- if .Values.serviceJavaTodo.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sretodo-chart.fullname" . }}-java-todo
+  labels:
+    {{- include "sretodo-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: java-todo
+spec:
+  replicas: {{ .Values.serviceJavaTodo.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "sretodo-chart.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: java-todo
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      # Add timestamp annotation to force update
+      annotations:
+        rollme: "{{ randAlphaNum 10 }}" # Force update (neuer Wert)
+      labels:
+        {{- include "sretodo-chart.selectorLabels" . | nindent 8 }}
+        {{- include "sretodo-chart.labels" . | nindent 8 }}
+        app.kubernetes.io/component: java-todo
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "sretodo-chart.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}-java-todo
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.serviceJavaTodo.image.repository }}:{{ .Values.serviceJavaTodo.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080 # Port aus Dockerfile/Compose
+              protocol: TCP
+          env:
+            - name: SERVER_PORT
+              value: "8080"
+            - name: OTEL_SERVICE_NAME
+              value: "{{ include "sretodo-chart.fullname" . }}-java-todo"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://sretodo-otel-collector:4318"
+            - name: OTEL_METRICS_EXPORTER
+              value: "otlp"
+            - name: OTEL_LOGS_EXPORTER
+              value: "otlp"
+            - name: OTEL_TRACES_EXPORTER
+              value: "otlp"
+            - name: OTEL_PROPAGATORS
+              value: "tracecontext,baggage"
+            - name: OTEL_INSTRUMENTATION_JDBC_ENABLED
+              value: "true"
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://{{ include "sretodo-chart.fullname" . }}-postgresql:5432/{{ .Values.postgresql.auth.database }}"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: {{ .Values.postgresql.auth.username | quote }}
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "sretodo-chart.fullname" . }}-postgresql
+                  key: password
+          # Liveness/Readiness Probes basierend auf dem Healthcheck aus Compose
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            initialDelaySeconds: 60 # Mehr Zeit geben zum Starten
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }} 

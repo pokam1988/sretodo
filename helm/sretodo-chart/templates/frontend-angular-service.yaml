@@ -1,0 +1,19 @@
+{{- if .Values.frontendAngular.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "sretodo-chart.fullname" . }}-frontend-angular
+  labels:
+    {{- include "sretodo-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend-angular
+spec:
+  type: {{ .Values.frontendAngular.service.type }}
+  ports:
+    - port: {{ .Values.frontendAngular.service.port }}
+      targetPort: http # Referenziert den Port-Namen im Deployment
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "sretodo-chart.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend-angular
+{{- end }} 

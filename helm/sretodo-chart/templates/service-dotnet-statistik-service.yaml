@@ -1,0 +1,19 @@
+{{- if .Values.serviceDotnetStatistik.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "sretodo-chart.fullname" . }}-dotnet-statistik
+  labels:
+    {{- include "sretodo-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: dotnet-statistik
+spec:
+  type: {{ .Values.serviceDotnetStatistik.service.type }}
+  ports:
+    - port: {{ .Values.serviceDotnetStatistik.service.port }}
+      targetPort: http # Name des Ports im Deployment
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "sretodo-chart.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: dotnet-statistik
+{{- end }} 

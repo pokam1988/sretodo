@@ -56,8 +56,10 @@ builder.Services.AddSwaggerGen();
 // --- HTTP Client für Service-Kommunikation konfigurieren ---
 builder.Services.AddHttpClient("TodoServiceClient", client =>
 {
-    // Basis-URL für den ToDo-Service im Docker-Netzwerk
-    client.BaseAddress = new Uri("http://service-java-todo:8080/");
+    // Basis-URL für den ToDo-Service im Docker-Netzwerk oder Kubernetes
+    var todoServiceHost = Environment.GetEnvironmentVariable("TODO_SERVICE_HOST") ?? "service-java-todo";
+    var todoServicePort = Environment.GetEnvironmentVariable("TODO_SERVICE_PORT") ?? "8080";
+    client.BaseAddress = new Uri($"http://{todoServiceHost}:{todoServicePort}/");
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 

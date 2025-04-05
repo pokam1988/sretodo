@@ -16,6 +16,7 @@ import { DocumentLoadInstrumentation } from '@opentelemetry/instrumentation-docu
 // Wichtig: Der Pfad /v1/traces ist der Standard für HTTP/protobuf.
 const exporter = new OTLPTraceExporter({
   url: 'http://localhost:4318/v1/traces', // URL des OTel Collectors (HTTP)
+  headers: {}, // Leere Header
 });
 
 // Span Processor erstellen
