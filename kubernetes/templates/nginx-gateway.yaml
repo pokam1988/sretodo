@@ -85,24 +85,24 @@ data:
         }
 
         {{- if .Values.javaTodo.enabled }}
-        location /api/todos {
-            proxy_pass http://{{ .Release.Name }}-java-todo:8080;
+        location /api/todos/ {
+            proxy_pass http://{{ .Release.Name }}-java-todo:8080/;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
         }
         {{- end }}
 
         {{- if .Values.dotnetStatistik.enabled }}
-        location /api/statistik {
-            proxy_pass http://{{ .Release.Name }}-dotnet-statistik:5000;
+        location /api/statistics {
+            proxy_pass http://{{ .Release.Name }}-dotnet-statistik:5000/statistics;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
         }
         {{- end }}
 
         {{- if .Values.pythonPomodoro.enabled }}
-        location /api/pomodoro {
-            proxy_pass http://{{ .Release.Name }}-python-pomodoro:8000;
+        location /api/pomodoro/timers {
+            proxy_pass http://{{ .Release.Name }}-python-pomodoro:8000/timers;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
         }

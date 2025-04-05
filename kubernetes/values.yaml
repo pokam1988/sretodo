@@ -19,7 +19,7 @@ frontend:
 
 # Java Todo Service
 javaTodo:
-  enabled: false
+  enabled: true
   replicas: 1
   image: ghcr.io/eliasschrei/sretodo-service-java-todo
   tag: latest
@@ -36,7 +36,7 @@ javaTodo:
 
 # .NET Statistik Service
 dotnetStatistik:
-  enabled: false
+  enabled: true
   replicas: 1
   image: ghcr.io/eliasschrei/sretodo-service-dotnet-statistik
   tag: latest
@@ -53,7 +53,7 @@ dotnetStatistik:
 
 # Python Pomodoro Service
 pythonPomodoro:
-  enabled: false
+  enabled: true
   replicas: 1
   image: ghcr.io/eliasschrei/sretodo-service-python-pomodoro
   tag: latest
