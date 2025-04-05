@@ -7,12 +7,12 @@ on:
       - dev
       - feature-250404-start
     paths:
-      - 'frontend-angular/**'
-      - 'service-java-todo/**'
-      - 'service-dotnet-statistik/**'
-      - 'service-python-pomodoro/**'
-      - 'kubernetes/**'
-      - '.github/workflows/deploy.yaml'
+      - "frontend-angular/**"
+      - "service-java-todo/**"
+      - "service-dotnet-statistik/**"
+      - "service-python-pomodoro/**"
+      - "kubernetes/**"
+      - ".github/workflows/deploy.yaml"
 
 jobs:
   build-and-push:
@@ -24,9 +24,9 @@ jobs:
     outputs:
       image_tag: ${{ steps.meta-common.outputs.version }} # Git SHA als Tag
       image_repo_frontend: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-frontend
-      image_repo_java: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-java-todo
-      image_repo_dotnet: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-dotnet-statistik
-      image_repo_python: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-python-pomodoro
+      image_repo_java: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-service-java-todo
+      image_repo_dotnet: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-service-dotnet-statistik
+      image_repo_python: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-service-python-pomodoro
 
     steps:
       - name: Checkout repository
@@ -78,9 +78,9 @@ jobs:
         with:
           images: |
             ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-frontend
-            ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-java-todo
-            ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-dotnet-statistik
-            ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-python-pomodoro
+            ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-service-java-todo
+            ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-service-dotnet-statistik
+            ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-service-python-pomodoro
           tags: |
             type=sha,prefix=
 
@@ -132,7 +132,7 @@ jobs:
         with:
           context: ./service-java-todo
           push: true
-          tags: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-java-todo:${{ steps.meta-common.outputs.version }}
+          tags: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-service-java-todo:${{ steps.meta-common.outputs.version }}
           labels: ${{ steps.meta-common.outputs.labels }}
           file: ./service-java-todo/Dockerfile
 
@@ -142,7 +142,7 @@ jobs:
         with:
           context: ./service-dotnet-statistik
           push: true
-          tags: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-dotnet-statistik:${{ steps.meta-common.outputs.version }}
+          tags: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-service-dotnet-statistik:${{ steps.meta-common.outputs.version }}
           labels: ${{ steps.meta-common.outputs.labels }}
           file: ./service-dotnet-statistik/Dockerfile
 
@@ -152,7 +152,7 @@ jobs:
         with:
           context: ./service-python-pomodoro
           push: true
-          tags: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-python-pomodoro:${{ steps.meta-common.outputs.version }}
+          tags: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-service-python-pomodoro:${{ steps.meta-common.outputs.version }}
           labels: ${{ steps.meta-common.outputs.labels }}
           file: ./service-python-pomodoro/Dockerfile
 
@@ -191,12 +191,11 @@ jobs:
         run: |
           helm upgrade --install sretodo-release ./kubernetes \
             --namespace ${{ secrets.OPENSHIFT_NAMESPACE }} \
-            --set sretodoFrontend.image.repository=${{ needs.build-and-push.outputs.image_repo_frontend }} \
-            --set sretodoFrontend.image.tag=${{ needs.build-and-push.outputs.image_tag }} \
-            --set sretodoJavaTodo.enabled=false \
-            --set sretodoDotnetStatistik.enabled=false \
-            --set sretodoPythonPomodoro.enabled=false \
-            --set sretodoPostgres.enabled=true \
-            --set sretodoObservability.enabled=true \
-            --set sretodoNginxGateway.enabled=true
-            # Fügen Sie hier weitere --set Anweisungen hinzu, falls nötig
+            --set frontend.image=${{ needs.build-and-push.outputs.image_repo_frontend }} \
+            --set frontend.tag=${{ needs.build-and-push.outputs.image_tag }} \
+            --set javaTodo.enabled=false \
+            --set dotnetStatistik.enabled=false \
+            --set pythonPomodoro.enabled=false \
+            --set postgres.enabled=true \
+            --set observabilityStack.enabled=true \
+            --set nginxGateway.enabled=true
