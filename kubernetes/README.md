@@ -46,7 +46,7 @@ helm install sretodo . -f values.yaml
 
 The SRE Todo application consists of the following components:
 
-- **Frontend**: Angular-based web interface
+- **Frontend**: Angular-based web interface built from CI/CD pipeline
 - **Java Todo Service**: Backend service for managing todos
 - **PostgreSQL**: Database for storing todos
 - **NGINX Gateway**: API gateway for frontend and services
@@ -133,6 +133,24 @@ Die Bereitstellung auf einem Kubernetes/OpenShift-Cluster wird automatisch durch
 3.  Wird das Helm-Chart mit `helm upgrade --install` auf dem Zielcluster (konfiguriert über Secrets `OPENSHIFT_SERVER`, `OPENSHIFT_TOKEN`, `OPENSHIFT_NAMESPACE`) angewendet, wobei die neu gebauten Image-Tags verwendet werden.
 
 Eine manuelle Bereitstellung ist weiterhin möglich (siehe Abschnitt "Bereitstellung"), aber der automatisierte Workflow ist der bevorzugte Weg für Updates.
+
+### Entfernen der Bereitstellung
+
+Zum Entfernen der Anwendung von OpenShift gibt es zwei Möglichkeiten:
+
+1. **Workflow "destroy.yaml" ausführen**:
+   - Gehe zu "Actions" > "Destroy SRE ToDo Demo from OpenShift"
+   - Klicke auf "Run workflow"
+   - Wähle die Umgebung und gib optional den Release-Namen an
+   - Klicke auf "Run workflow"
+
+2. **Deploy-Workflow mit "destroy" Option ausführen**:
+   - Gehe zu "Actions" > "Deploy SRE ToDo Demo to OpenShift"
+   - Klicke auf "Run workflow"
+   - Wähle "destroy" als Action
+   - Klicke auf "Run workflow"
+
+Beide Methoden entfernen das Helm-Release und bereinigen die zugehörigen Ressourcen im OpenShift-Cluster.
 
 ## Deinstallation
 
