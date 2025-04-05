@@ -1,0 +1,424 @@
+{{- if .Values.sretodoObservability.enabled }}
+---
+# OpenTelemetry Collector
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sretodo-otel-collector
+  labels:
+    {{- include "sretodo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: otel-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "sretodo.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: otel-collector
+  template:
+    metadata:
+      labels:
+        {{- include "sretodo.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: otel-collector
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}-otel-collector
+          image: "{{ .Values.sretodoObservability.otelcollector.image.repository }}:{{ .Values.sretodoObservability.otelcollector.image.tag | default "latest" }}"
+          imagePullPolicy: {{ .Values.sretodoObservability.otelcollector.image.pullPolicy }}
+          ports:
+            - name: otlp-grpc
+              containerPort: 4317
+              protocol: TCP
+            - name: otlp-http
+              containerPort: 4318
+              protocol: TCP
+            - name: prometheus
+              containerPort: 8889
+              protocol: TCP
+          volumeMounts:
+            - name: otel-collector-config
+              mountPath: /etc/otelcol-contrib/config.yaml
+              subPath: config.yaml
+      volumes:
+        - name: otel-collector-config
+          configMap:
+            name: sretodo-otel-collector-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sretodo-otel-collector-config
+  labels:
+    {{- include "sretodo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: otel-collector
+data:
+  config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+          http:
+
+    processors:
+      batch:
+        timeout: 1s
+
+    exporters:
+      prometheus:
+        endpoint: "0.0.0.0:8889"
+      otlp/tempo:
+        endpoint: sretodo-tempo:4317
+        tls:
+          insecure: true
+      loki:
+        endpoint: http://sretodo-loki:3100/loki/api/v1/push
+
+    service:
+      pipelines:
+        metrics:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [prometheus]
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp/tempo]
+        logs:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [loki]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sretodo-otel-collector
+  labels:
+    {{- include "sretodo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: otel-collector
+spec:
+  type: ClusterIP
+  ports:
+    - port: 4317
+      targetPort: otlp-grpc
+      protocol: TCP
+      name: otlp-grpc
+    - port: 4318
+      targetPort: otlp-http
+      protocol: TCP
+      name: otlp-http
+    - port: 8889
+      targetPort: prometheus
+      protocol: TCP
+      name: prometheus
+  selector:
+    {{- include "sretodo.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: otel-collector
+---
+# Prometheus
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sretodo-prometheus
+  labels:
+    {{- include "sretodo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "sretodo.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: prometheus
+  template:
+    metadata:
+      labels:
+        {{- include "sretodo.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: prometheus
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}-prometheus
+          image: "{{ .Values.sretodoObservability.prometheus.image.repository }}:{{ .Values.sretodoObservability.prometheus.image.tag | default "latest" }}"
+          imagePullPolicy: {{ .Values.sretodoObservability.prometheus.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 9090
+              protocol: TCP
+          volumeMounts:
+            - name: prometheus-config
+              mountPath: /etc/prometheus/prometheus.yml
+              subPath: prometheus.yml
+            - name: prometheus-data
+              mountPath: /prometheus
+      volumes:
+        - name: prometheus-config
+          configMap:
+            name: sretodo-prometheus-config
+        - name: prometheus-data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sretodo-prometheus-config
+  labels:
+    {{- include "sretodo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: prometheus
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+
+    scrape_configs:
+      - job_name: 'otel-collector'
+        static_configs:
+          - targets: ['sretodo-otel-collector:8889']
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sretodo-prometheus
+  labels:
+    {{- include "sretodo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: prometheus
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9090
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "sretodo.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: prometheus
+---
+# Tempo (Traces)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sretodo-tempo
+  labels:
+    {{- include "sretodo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: tempo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "sretodo.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: tempo
+  template:
+    metadata:
+      labels:
+        {{- include "sretodo.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: tempo
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}-tempo
+          image: "{{ .Values.sretodoObservability.tempo.image.repository }}:{{ .Values.sretodoObservability.tempo.image.tag | default "latest" }}"
+          imagePullPolicy: {{ .Values.sretodoObservability.tempo.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3200
+              protocol: TCP
+            - name: grpc
+              containerPort: 4317
+              protocol: TCP
+          args:
+            - -config.file=/etc/tempo/tempo.yaml
+          volumeMounts:
+            - name: tempo-config
+              mountPath: /etc/tempo/tempo.yaml
+              subPath: tempo.yaml
+            - name: tempo-data
+              mountPath: /var/tempo
+      volumes:
+        - name: tempo-config
+          configMap:
+            name: sretodo-tempo-config
+        - name: tempo-data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sretodo-tempo-config
+  labels:
+    {{- include "sretodo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: tempo
+data:
+  tempo.yaml: |
+    server:
+      http_listen_port: 3200
+
+    distributor:
+      receivers:
+        otlp:
+          protocols:
+            grpc:
+              endpoint: 0.0.0.0:4317
+
+    storage:
+      trace:
+        backend: local
+        local:
+          path: /var/tempo/traces
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sretodo-tempo
+  labels:
+    {{- include "sretodo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: tempo
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3200
+      targetPort: http
+      protocol: TCP
+      name: http
+    - port: 4317
+      targetPort: grpc
+      protocol: TCP
+      name: grpc
+  selector:
+    {{- include "sretodo.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: tempo
+---
+# Loki (Logs)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sretodo-loki
+  labels:
+    {{- include "sretodo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: loki
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "sretodo.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: loki
+  template:
+    metadata:
+      labels:
+        {{- include "sretodo.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: loki
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}-loki
+          image: "{{ .Values.sretodoObservability.loki.image.repository }}:{{ .Values.sretodoObservability.loki.image.tag | default "latest" }}"
+          imagePullPolicy: {{ .Values.sretodoObservability.loki.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3100
+              protocol: TCP
+          volumeMounts:
+            - name: loki-data
+              mountPath: /loki
+      volumes:
+        - name: loki-data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sretodo-loki
+  labels:
+    {{- include "sretodo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: loki
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3100
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "sretodo.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: loki
+---
+# Grafana
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sretodo-grafana
+  labels:
+    {{- include "sretodo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "sretodo.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: grafana
+  template:
+    metadata:
+      labels:
+        {{- include "sretodo.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: grafana
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}-grafana
+          image: "{{ .Values.sretodoObservability.grafana.image.repository }}:{{ .Values.sretodoObservability.grafana.image.tag | default "latest" }}"
+          imagePullPolicy: {{ .Values.sretodoObservability.grafana.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          env:
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: {{ .Values.sretodoObservability.grafana.adminPassword | quote }}
+          volumeMounts:
+            - name: grafana-provisioning
+              mountPath: /etc/grafana/provisioning
+            - name: grafana-data
+              mountPath: /var/lib/grafana
+      volumes:
+        - name: grafana-provisioning
+          configMap:
+            name: sretodo-grafana-datasources
+        - name: grafana-data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sretodo-grafana-datasources
+  labels:
+    {{- include "sretodo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: grafana
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://sretodo-prometheus:9090
+        isDefault: true
+      - name: Tempo
+        type: tempo
+        access: proxy
+        url: http://sretodo-tempo:3200
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://sretodo-loki:3100
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sretodo-grafana
+  labels:
+    {{- include "sretodo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: grafana
+spec:
+  type: {{ .Values.sretodoObservability.grafana.service.type }}
+  ports:
+    - port: {{ .Values.sretodoObservability.grafana.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "sretodo.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: grafana
+{{- end }}
