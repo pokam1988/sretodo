@@ -6,6 +6,13 @@ on:
       - main
       - dev
       - feature-250404-start
+    paths:
+      - 'frontend-angular/**'
+      - 'service-java-todo/**'
+      - 'service-dotnet-statistik/**'
+      - 'service-python-pomodoro/**'
+      - 'kubernetes/**'
+      - '.github/workflows/deploy.yaml'
 
 jobs:
   build-and-push:
@@ -77,8 +84,41 @@ jobs:
           tags: |
             type=sha,prefix=
 
+      - name: Check for frontend changes
+        id: check_frontend
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            frontend:
+              - 'frontend-angular/**'
+
+      - name: Check for java-todo changes
+        id: check_java
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            java:
+              - 'service-java-todo/**'
+
+      - name: Check for dotnet-statistik changes
+        id: check_dotnet
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            dotnet:
+              - 'service-dotnet-statistik/**'
+
+      - name: Check for python-pomodoro changes
+        id: check_python
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            python:
+              - 'service-python-pomodoro/**'
+
       - name: Build and push Frontend image
         uses: docker/build-push-action@v5
+        if: ${{ steps.check_frontend.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch' }}
         with:
           context: ./frontend-angular
           push: true
@@ -88,6 +128,7 @@ jobs:
 
       - name: Build and push Java Todo image
         uses: docker/build-push-action@v5
+        if: ${{ steps.check_java.outputs.java == 'true' || github.event_name == 'workflow_dispatch' }}
         with:
           context: ./service-java-todo
           push: true
@@ -97,6 +138,7 @@ jobs:
 
       - name: Build and push .NET Statistik image
         uses: docker/build-push-action@v5
+        if: ${{ steps.check_dotnet.outputs.dotnet == 'true' || github.event_name == 'workflow_dispatch' }}
         with:
           context: ./service-dotnet-statistik
           push: true
@@ -106,6 +148,7 @@ jobs:
 
       - name: Build and push Python Pomodoro image
         uses: docker/build-push-action@v5
+        if: ${{ steps.check_python.outputs.python == 'true' || github.event_name == 'workflow_dispatch' }}
         with:
           context: ./service-python-pomodoro
           push: true
@@ -132,7 +175,7 @@ jobs:
           tar xzf oc.tar.gz
           sudo mv oc /usr/local/bin/
           sudo chmod +x /usr/local/bin/oc
-          rm -f oc.tar.gz README.md
+          rm -f oc.tar.gz README.md || true
           oc version
 
       - name: Log in to OpenShift
