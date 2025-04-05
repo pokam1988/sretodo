@@ -17,6 +17,8 @@ spec:
         {{- include "sretodo.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: postgres
     spec:
+      securityContext:
+        fsGroup: 999
       containers:
         - name: {{ .Chart.Name }}-postgres
           image: "{{ .Values.sretodoPostgres.image.repository }}:{{ .Values.sretodoPostgres.image.tag | default "14-alpine" }}"
