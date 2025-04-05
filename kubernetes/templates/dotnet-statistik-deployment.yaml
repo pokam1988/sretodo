@@ -23,32 +23,54 @@ spec:
         fsGroup: 1006530000
       containers:
         - name: dotnet-statistik
-          image: "{{ .Values.dotnetStatistik.image }}:{{ .Values.dotnetStatistik.tag }}"
-          imagePullPolicy: {{ .Values.dotnetStatistik.pullPolicy }}
-          command: ["/bin/bash", "-c"]
+          image: "python:3.12-slim"
+          imagePullPolicy: IfNotPresent
+          command: ["python", "-c"]
           args:
             - |
-              echo '
-              #!/bin/bash
-              mkdir -p /tmp/api/statistics
-              cat > /tmp/api/statistics/index.html << EOF
-              {
-                "totalTodos": 42,
-                "completedTodos": 18,
-                "pendingTodos": 24,
-                "error": null
-              }
-              EOF
-              cat > /tmp/api/health << EOF
-              {
-                "status": "healthy"
-              }
-              EOF
-              cd /tmp
-              exec python3 -m http.server 5000
-              ' > /tmp/run_server.sh
-              chmod +x /tmp/run_server.sh
-              /tmp/run_server.sh
+              import http.server
+              import socketserver
+              import json
+              from urllib.parse import urlparse, parse_qs
+              
+              PORT = 5000
+              
+              class StatisticsHandler(http.server.SimpleHTTPRequestHandler):
+                  def do_GET(self):
+                      parsed_path = urlparse(self.path)
+                      
+                      if parsed_path.path == '/health':
+                          self.send_response(200)
+                          self.send_header('Content-type', 'application/json')
+                          self.end_headers()
+                          self.wfile.write(json.dumps({"status": "healthy"}).encode())
+                          return
+                          
+                      if parsed_path.path == '/statistics':
+                          self.send_response(200)
+                          self.send_header('Content-type', 'application/json')
+                          self.end_headers()
+                          
+                          # Mock statistics data
+                          data = {
+                              "totalTodos": 42,
+                              "completedTodos": 18,
+                              "pendingTodos": 24,
+                              "error": None
+                          }
+                          
+                          self.wfile.write(json.dumps(data).encode())
+                          return
+                      
+                      # Default response
+                      self.send_response(200)
+                      self.send_header('Content-type', 'text/plain')
+                      self.end_headers()
+                      self.wfile.write("Dotnet Statistik Service (Python Mock)".encode())
+              
+              print(f"Starting Statistics server on port {PORT}")
+              httpd = socketserver.TCPServer(("", PORT), StatisticsHandler)
+              httpd.serve_forever()
           securityContext:
             runAsNonRoot: true
             runAsUser: 1006530000

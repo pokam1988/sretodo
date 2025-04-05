@@ -23,68 +23,53 @@ spec:
         fsGroup: 1006530000
       containers:
         - name: java-todo
-          image: "{{ .Values.javaTodo.image }}:{{ .Values.javaTodo.tag }}"
-          imagePullPolicy: {{ .Values.javaTodo.pullPolicy }}
-          command: ["/bin/bash", "-c"]
+          image: "python:3.12-slim"
+          imagePullPolicy: IfNotPresent
+          command: ["python", "-c"]
           args:
             - |
-              echo '
-              import java.io.*;
-              import java.net.*;
-              import com.sun.net.httpserver.*;
-              import java.util.*;
+              import http.server
+              import socketserver
+              import json
+              import time
+              from urllib.parse import urlparse, parse_qs
               
-              public class SimpleTodoServer {
-                  public static void main(String[] args) throws Exception {
-                      HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
-                      
-                      // Health endpoints
-                      server.createContext("/actuator/health/liveness", (exchange) -> {
-                          String response = "{\"status\":\"UP\"}";
-                          exchange.getResponseHeaders().set("Content-Type", "application/json");
-                          exchange.sendResponseHeaders(200, response.getBytes().length);
-                          OutputStream os = exchange.getResponseBody();
-                          os.write(response.getBytes());
-                          os.close();
-                      });
-                      
-                      server.createContext("/actuator/health/readiness", (exchange) -> {
-                          String response = "{\"status\":\"UP\"}";
-                          exchange.getResponseHeaders().set("Content-Type", "application/json");
-                          exchange.sendResponseHeaders(200, response.getBytes().length);
-                          OutputStream os = exchange.getResponseBody();
-                          os.write(response.getBytes());
-                          os.close();
-                      });
-                      
-                      // Todo API endpoints
-                      server.createContext("/", (exchange) -> {
-                          if (exchange.getRequestURI().getPath().startsWith("/api/todos")) {
-                              String response = "[{\"id\":1,\"title\":\"Deploy microservices\",\"completed\":false},{\"id\":2,\"title\":\"Configure observability\",\"completed\":true}]";
-                              exchange.getResponseHeaders().set("Content-Type", "application/json");
-                              exchange.sendResponseHeaders(200, response.getBytes().length);
-                              OutputStream os = exchange.getResponseBody();
-                              os.write(response.getBytes());
-                              os.close();
-                          } else {
-                              String response = "Java Todo Service";
-                              exchange.getResponseHeaders().set("Content-Type", "text/plain");
-                              exchange.sendResponseHeaders(200, response.getBytes().length);
-                              OutputStream os = exchange.getResponseBody();
-                              os.write(response.getBytes());
-                              os.close();
-                          }
-                      });
-                      
-                      server.setExecutor(null);
-                      server.start();
-                      System.out.println("Todo Server started on port 8080");
-                  }
-              }
-              ' > SimpleTodoServer.java
+              PORT = 8080
               
-              javac SimpleTodoServer.java
-              java SimpleTodoServer
+              todos = [
+                  {"id": 1, "title": "Deploy microservices", "completed": False},
+                  {"id": 2, "title": "Configure observability", "completed": True},
+                  {"id": 3, "title": "Setup Kubernetes", "completed": True},
+                  {"id": 4, "title": "Write documentation", "completed": False}
+              ]
+              
+              class TodoHandler(http.server.SimpleHTTPRequestHandler):
+                  def do_GET(self):
+                      parsed_path = urlparse(self.path)
+                      
+                      if parsed_path.path == '/actuator/health/liveness' or parsed_path.path == '/actuator/health/readiness':
+                          self.send_response(200)
+                          self.send_header('Content-type', 'application/json')
+                          self.end_headers()
+                          self.wfile.write(json.dumps({"status": "UP"}).encode())
+                          return
+                          
+                      if parsed_path.path == '/api/todos/' or parsed_path.path == '/api/todos':
+                          self.send_response(200)
+                          self.send_header('Content-type', 'application/json')
+                          self.end_headers()
+                          self.wfile.write(json.dumps(todos).encode())
+                          return
+                      
+                      # Default response
+                      self.send_response(200)
+                      self.send_header('Content-type', 'text/plain')
+                      self.end_headers()
+                      self.wfile.write("Java Todo Service (Python Mock)".encode())
+              
+              print(f"Starting Todo server on port {PORT}")
+              httpd = socketserver.TCPServer(("", PORT), TodoHandler)
+              httpd.serve_forever()
           securityContext:
             runAsNonRoot: true
             runAsUser: 1006530000
