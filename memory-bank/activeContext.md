@@ -75,6 +75,8 @@ Der Fokus liegt auf der Stabilisierung und Verbesserung des Kubernetes-Deploymen
 
 ## Letzte Änderungen
 
+- **GitHub Actions Workflow:** Erstellt einen Workflow (`.github/workflows/deploy.yaml`), der bei Push auf `main` oder `dev` ausgelöst wird. Der Workflow baut die Docker Images für Frontend und Backend-Services, pusht sie zur GitHub Container Registry (ghcr.io) und deployt die Anwendung mittels Helm auf eine konfigurierte OpenShift-Instanz.
+- **Workflow Fix:** Korrektur einer doppelten `tags`-Definition im Frontend-Build-Schritt.
 - **Kubernetes-Deployment:** Erfolgreiche Bereitstellung aller Services und der Observability-Komponenten (Collector, Prometheus, Tempo, Loki, Grafana, Nginx-Gateway) mithilfe von Helm-Charts in einem lokalen Kubernetes-Cluster.
 - **Bugfixes (Kubernetes):**
     - Korrektur des Nginx-Routings für die Todo-API (Problem mit abschließendem Slash).
@@ -85,10 +87,11 @@ Der Fokus liegt auf der Stabilisierung und Verbesserung des Kubernetes-Deploymen
 
 ## Nächste Schritte (Priorisiert)
 
-1.  **Grafana Dashboards:** Erstellen/Anpassen von Basis-Dashboards für die Überwachung der Services in Kubernetes (Metriken, Traces, Logs).
-2.  **Kubernetes Ressourcen:** Definieren und Implementieren von Ressourcen-Requests und -Limits in den Helm-Charts für alle Deployments.
-3.  **Dokumentation:** Aktualisieren der README-Dateien für die Services und das Kubernetes-Deployment. Memory Bank ist aktuell.
-4.  **Kubernetes Health Checks:** Implementieren von Liveness- und Readiness-Probes in den Helm-Charts.
+1.  **GitHub Actions:** Testen/Überwachen des ersten Workflow-Laufs.
+2.  **Grafana Dashboards:** Erstellen/Anpassen von Basis-Dashboards für die Überwachung der Services in Kubernetes (Metriken, Traces, Logs).
+3.  **Kubernetes Ressourcen:** Definieren und Implementieren von Ressourcen-Requests und -Limits in den Helm-Charts für alle Deployments.
+4.  **Dokumentation:** Aktualisieren der README-Dateien für die Services und das Kubernetes-Deployment (Memory Bank ist aktuell).
+5.  **Kubernetes Health Checks:** Implementieren von Liveness- und Readiness-Probes in den Helm-Charts.
 
 ## Offene Fragen / Entscheidungen
 

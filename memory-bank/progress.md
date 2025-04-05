@@ -91,7 +91,7 @@
 ### Bekannte Probleme:
 
 - **Go Service Logging:** OTel Logging für Go ist aufgrund von Modul-Inkompatibilitäten noch nicht implementiert.
-- **(Gelöst):** `service-python-pomodoro` startete nicht korrekt aufgrund von `ModuleNotFoundError` im OTel-Setup. Behoben durch Wechsel auf Agent-basierten Ansatz.
+- **[Behoben]:** `service-python-pomodoro` startete nicht korrekt aufgrund von `ModuleNotFoundError` im OTel-Setup. Behoben durch Wechsel auf Agent-basierten Ansatz.
 
 ## Was funktioniert:
 
@@ -129,6 +129,7 @@
 - ✅ CORS-Konfiguration für API- und OTel-Endpunkte implementiert (Helm)
 - ✅ Nginx Routing für den OTel-Collector-Endpunkt (Helm)
 - ✅ Service-Alias für den Java-Todo-Service erstellt (Helm)
+- ✅ GitHub Actions Workflow für Build, Push (GHCR) & Deploy (OpenShift via Helm)
 
 ### Anwendungsservices
 - ✅ Java Todo Service mit PostgreSQL-Integration

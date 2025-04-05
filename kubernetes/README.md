@@ -71,6 +71,16 @@ Dieses Verzeichnis enthält die Helm-Charts für die Bereitstellung der SRE ToDo
     ```
     Zugriff dann über `http://localhost:3000/`. Standard-Login ist `admin`/`prom-operator`.
 
+## CI/CD mit GitHub Actions
+
+Die Bereitstellung auf einem Kubernetes/OpenShift-Cluster wird automatisch durch einen GitHub Actions Workflow (`.github/workflows/deploy.yaml`) gesteuert. Bei jedem Push auf die Branches `main` oder `dev`:
+
+1.  Werden die Docker-Images für alle Services gebaut.
+2.  Werden die Images in die GitHub Container Registry (ghcr.io) gepusht.
+3.  Wird das Helm-Chart mit `helm upgrade --install` auf dem Zielcluster (konfiguriert über Secrets `OPENSHIFT_SERVER`, `OPENSHIFT_TOKEN`, `OPENSHIFT_NAMESPACE`) angewendet, wobei die neu gebauten Image-Tags verwendet werden.
+
+Eine manuelle Bereitstellung ist weiterhin möglich (siehe Abschnitt "Bereitstellung"), aber der automatisierte Workflow ist der bevorzugte Weg für Updates.
+
 ## Konfiguration
 
 Die Konfiguration erfolgt hauptsächlich über die `values.yaml`-Datei im Hauptchart (`kubernetes/values.yaml`) und den entsprechenden `values.yaml`-Dateien in den Sub-Charts (`kubernetes/charts/*/values.yaml`). Hier können z.B. Image-Tags, Replica Counts, Ressourcenlimits und spezifische Service-Einstellungen angepasst werden.
