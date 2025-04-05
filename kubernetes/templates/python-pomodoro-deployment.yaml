@@ -31,7 +31,7 @@ spec:
             runAsGroup: 1006530000
           ports:
             - name: http
-              containerPort: 8000
+              containerPort: 8002
               protocol: TCP
           # Add health checks
           livenessProbe:
@@ -64,7 +64,7 @@ metadata:
 spec:
   type: {{ .Values.pythonPomodoro.service.type }}
   ports:
-    - port: 8000
+    - port: 8002
       targetPort: http
       protocol: TCP
       name: http

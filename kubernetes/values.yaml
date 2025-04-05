@@ -4,7 +4,7 @@
 frontend:
   enabled: true
   replicas: 1
-  image: ghcr.io/eliasschrei/sretodo-frontend
+  image: ghcr.io/mistral-valaise/sretodo-frontend
   tag: latest
   pullPolicy: Always
   service:
@@ -21,7 +21,7 @@ frontend:
 javaTodo:
   enabled: true
   replicas: 1
-  image: ghcr.io/eliasschrei/sretodo-service-java-todo
+  image: ghcr.io/mistral-valaise/sretodo-service-java-todo
   tag: latest
   pullPolicy: Always
   service:
@@ -38,7 +38,7 @@ javaTodo:
 dotnetStatistik:
   enabled: true
   replicas: 1
-  image: ghcr.io/eliasschrei/sretodo-service-dotnet-statistik
+  image: ghcr.io/mistral-valaise/sretodo-service-dotnet-statistik
   tag: latest
   pullPolicy: Always
   service:
@@ -55,7 +55,7 @@ dotnetStatistik:
 pythonPomodoro:
   enabled: true
   replicas: 1
-  image: ghcr.io/eliasschrei/sretodo-service-python-pomodoro
+  image: ghcr.io/mistral-valaise/sretodo-service-python-pomodoro
   tag: latest
   pullPolicy: Always
   service:

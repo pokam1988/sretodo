@@ -102,7 +102,7 @@ data:
 
         {{- if .Values.pythonPomodoro.enabled }}
         location /api/pomodoro/timers {
-            proxy_pass http://{{ .Release.Name }}-python-pomodoro:8000/timers;
+            proxy_pass http://{{ .Release.Name }}-python-pomodoro:8002/timers;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
         }
