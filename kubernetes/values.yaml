@@ -4,8 +4,8 @@
 sretodoFrontend:
   enabled: true
   image:
-    repository: ghcr.io/mistral-valaise/sretodo-frontend
-    tag: latest
+    repository: nginxinc/nginx-unprivileged
+    tag: stable-alpine
     pullPolicy: IfNotPresent
   replicaCount: 1
   service:
@@ -14,7 +14,7 @@ sretodoFrontend:
 
 # Java Todo Service
 sretodoJavaTodo:
-  enabled: true
+  enabled: false # Disable until image available
   image:
     repository: ghcr.io/mistral-valaise/sretodo-java-todo
     tag: latest
@@ -26,7 +26,7 @@ sretodoJavaTodo:
 
 # .NET Statistics Service
 sretodoDotnetStatistik:
-  enabled: true
+  enabled: false # Disable until image available
   image:
     repository: ghcr.io/mistral-valaise/sretodo-dotnet-statistik
     tag: latest
@@ -38,7 +38,7 @@ sretodoDotnetStatistik:
 
 # Python Pomodoro Service
 sretodoPythonPomodoro:
-  enabled: true
+  enabled: false # Disable until image available
   image:
     repository: ghcr.io/mistral-valaise/sretodo-python-pomodoro
     tag: latest
@@ -108,8 +108,8 @@ sretodoObservability:
 sretodoNginxGateway:
   enabled: true
   image:
-    repository: nginx
-    tag: latest
+    repository: nginxinc/nginx-unprivileged
+    tag: stable-alpine
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
