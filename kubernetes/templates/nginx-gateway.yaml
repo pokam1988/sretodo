@@ -18,10 +18,11 @@ spec:
         {{- include "sretodo.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: nginx-gateway
     spec:
-      # Use OpenShift compliant security context
+      # Use OpenShift compliant security context (empty)
       securityContext: {}
       containers:
         - name: {{ .Chart.Name }}-nginx-gateway
+          # No container-level securityContext
           image: "{{ .Values.sretodoNginxGateway.image.repository }}:{{ .Values.sretodoNginxGateway.image.tag | default "latest" }}"
           imagePullPolicy: {{ .Values.sretodoNginxGateway.image.pullPolicy }}
           ports:
@@ -44,10 +45,22 @@ spec:
             - name: nginx-config
               mountPath: /etc/nginx/conf.d/default.conf
               subPath: default.conf
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: nginx-run
+              mountPath: /var/run
+            - name: nginx-tmp
+              mountPath: /tmp
       volumes:
         - name: nginx-config
           configMap:
             name: sretodo-nginx-config
+        - name: nginx-cache
+          emptyDir: {}
+        - name: nginx-run
+          emptyDir: {}
+        - name: nginx-tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: ConfigMap
