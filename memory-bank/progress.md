@@ -3,7 +3,7 @@
 ## 1. Current Status
 
 -   **Overall:** Alle Services inkl. Nginx Gateway laufen via Docker Compose. Basislogik für ToDo, Pomodoro, Statistik, Healthcheck implementiert. Frontend zeigt Daten an, erlaubt Hinzufügen/Löschen/Status ändern von ToDos und Pomodoro-Steuerung. Observability-Stack läuft, Korrelation konfiguriert.
--   **Focus:** Abschluss MVP, Verfeinerungen.
+-   **Focus:** Abschluss MVP, Verfeinerungen, OpenShift-Compatibility.
 -   **Date:** $(date +%Y-%m-%d)
 
 ## 2. What Works
@@ -30,6 +30,8 @@
 -   **Nginx Gateway:** Gateway implementiert, leitet API-Anfragen (`/api/*`) und Frontend-Anfragen (`/`) korrekt weiter. Zugriff über `http://localhost/`.
 -   **Frontend Logic:** Angular Frontend zeigt ToDo-Liste & Statistik an, implementiert ToDo-Erstellen/Löschen/Status-Update, Pomodoro-Anzeige/Steuerung (inkl. Countdown).
 -   **CORS:** Probleme durch zentrale Behandlung im Nginx Gateway gelöst, Konfiguration aus Backends entfernt.
+-   **OpenShift Compatibility:** Kubernetes-Helm-Chart für OpenShift angepasst mit Non-Root-Security-Contexts und korrekten Port-Mappings.
+-   **GitHub Actions Workflow:** Workflow für Build, Push und Deployment auf OpenShift erstellt und um "deploy-only"-Option erweitert.
 
 ## 3. What's Left to Build (High-Level MVP Goals)
 
@@ -39,6 +41,8 @@
 4.  ~~**Basic Service Logic:** Implement core functionality (ToDo CRUD, Pomodoro Timers, Statistik Aggregation (ToDo Count), Health Checks, Frontend Display).~~ (Basislogik ist drin, Frontend zeigt an)
 5.  **Grafana Dashboards:** ~~Create basic dashboards for visualizing data.~~ (Erstellt: Service-, Log-, Ressourcen-Übersicht via Provisioning) **<- Teilweise Erledigt**
 6.  **Fehlerbehebung Grafana Dashboards:** Untersuchen, warum provisionierte Dashboards "No Data" anzeigen.
+7.  ~~**OpenShift Compatibility:** Update Kubernetes manifests for OpenShift compatibility and ensure proper deployment on OpenShift.~~
+8.  **Frontend-Fix:** Frontend-Deployment verwendet aktuell statisches HTML über ConfigMap statt Angular-App. Fix: ConfigMap entfernen und Angular-Image verwenden.
 
 ## 4. Known Issues / Challenges
 
@@ -51,6 +55,7 @@
 -   **[Behoben]** CORS-Probleme (Gelöst durch Nginx Gateway).
 -   **[Behoben]** Nginx Gateway Start/Konfigurationsprobleme (Volume Mounts, Konfig-Fehler).
 -   **[Neu]** Grafana Dashboards (Service Overview, Log Overview, Resource Usage) zeigen "No Data". Ursache (Query, Datenfluss?) unklar.
+-   **[Neu]** Frontend in OpenShift zeigt statische HTML-Seite statt Angular-App (Verursacht durch ConfigMap-Mount).
 
 ## 5. Potential Next Steps / Refinements
 
@@ -59,7 +64,9 @@
 -   Improve Frontend UI/UX (e.g., proper routing instead of *ngIf).
 -   Add OpenTelemetry instrumentation to Angular Frontend.
 -   Add more sophisticated backend logic (e.g., user accounts, real persistence).
--   Prepare for Kubernetes deployment.
+-   ~~Prepare for Kubernetes deployment.~~ **(Done)**
+-   ~~Make the application OpenShift compatible.~~ **(Done)**
+-   ~~Enhance GitHub Actions workflow for CI/CD.~~ **(Done)**
 
 ## Projektstatus und Fortschritt
 
@@ -77,21 +84,22 @@
     - Loki sammelt Logs vom Collector (Java, DotNet, Python).
     - Tempo sammelt Traces vom Collector.
     - Grafana ist konfiguriert, zeigt Datenquellen für Prometheus, Loki, Tempo an.
+- **Kubernetes/OpenShift:** Basis-Deployment via Helm-Chart mit OpenShift-Kompatibilitätsanpassungen für alle Services und Observability-Komponenten.
+- **CI/CD:** GitHub Actions Workflow für automatisierte Deployments.
 
 ### Was als Nächstes zu tun ist:
 
-1.  **(Optional):** Logging für `service-go-healthcheck` korrigieren/implementieren, sobald stabile OTel Go Logging Module verfügbar/identifiziert sind.
-2.  **Kubernetes-Deployment:**
-    - Basis-Manifeste für alle Services und Observability-Komponenten erstellen (Deployments, Services, ConfigMaps etc.).
-    - Ingress-Konfiguration für den Zugriff auf die Anwendung.
-    - Sicherstellen, dass OTel-Konfiguration (Service-Namen, Collector-Endpoint) in K8s korrekt gesetzt wird.
-    - Testen des Deployments in einer lokalen K8s-Umgebung (z.B. minikube, k3d, Docker Desktop K8s).
-3.  **Grafana Dashboards:** Vordefinierte Dashboards für die Services erstellen/anpassen (optional für MVP).
+1.  **Frontend-Fix:** Entfernen der statischen HTML-Seite in OpenShift und Verwendung des Angular-Frontend-Images.
+2.  **Grafana Dashboards:** Anpassen oder neu erstellen von Dashboards für Services, Protokolle und Ressourcen.
+3.  **Kubernetes-Resourcen:** Optimierung der Ressourcenlimits/-requests für alle Komponenten.
+4.  **OpenShift-Konfiguration:** Optimieren der Security-Contexts und Networking-Einstellungen.
+5.  **(Optional):** Logging für `service-go-healthcheck` korrigieren/implementieren, sobald stabile OTel Go Logging Module verfügbar/identifiziert sind.
 
 ### Bekannte Probleme:
 
+- **Frontend in OpenShift:** Zeigt statische HTML-Seite statt Angular-App (Fix: Entfernen der ConfigMap-Montage).
 - **Go Service Logging:** OTel Logging für Go ist aufgrund von Modul-Inkompatibilitäten noch nicht implementiert.
-- **[Behoben]:** `service-python-pomodoro` startete nicht korrekt aufgrund von `ModuleNotFoundError` im OTel-Setup. Behoben durch Wechsel auf Agent-basierten Ansatz.
+- **Grafana Dashboards:** Zeigen teilweise "No Data" aufgrund von Metrik-Namen/Label-Inkompatibilitäten.
 
 ## Was funktioniert:
 
@@ -105,16 +113,19 @@
 - **Prometheus:** Sammelt Metriken von allen **Backend**-Services und dem Collector.
 - **Grafana:** Zeigt Traces (Tempo), Logs (Loki) und Metriken (Prometheus) an. Dashboards müssen noch angepasst werden.
 - **API Gateway (Nginx):** Leitet Anfragen korrekt an die Backend-Services weiter.
+- **Kubernetes/OpenShift:** Deployment über Helm-Chart mit OpenShift-spezifischen Anpassungen.
+- **CI/CD:** GitHub Actions Workflow für automatisierte Deployments.
 
 ## Was noch fehlt / Nächste Schritte:
 
+- **Frontend-Fix in OpenShift:** Entfernen der statischen HTML-Seite und Verwendung des Angular-Images.
 - **Grafana Dashboards:** Anpassen/Erstellen spezifischer Dashboards zur Visualisierung der gesammelten Daten (Metriken, Traces, Logs).
 - **Weitere Metriken:** Implementierung spezifischer Geschäfts-/Anwendungsmetriken in den Services.
-- **Kubernetes-Deployment:** Vorbereitung und Durchführung des Deployments auf Kubernetes.
 - **Dokumentation:** Kontinuierliche Pflege der Memory Bank und READMEs.
 
 ## Bekannte Probleme:
 
+- **Frontend in OpenShift:** Zeigt statische HTML-Seite statt Angular-App.
 - **Grafana Dashboards:** Die vorimportierten Dashboards zeigen teilweise "No Data", da die Metrik-Namen oder Labels nicht exakt übereinstimmen. Müssen angepasst werden.
 
 # SRE Todo MVP - Fortschritt
@@ -124,12 +135,14 @@
 ### Infrastruktur
 - ✅ Docker-Compose-Setup für lokale Entwicklung
 - ✅ Kubernetes-Deployment mit Helm-Charts
+- ✅ OpenShift-Kompatibilität implementiert (Non-Root-Benutzer, Service-Konfigurationen)
 - ✅ Nginx Gateway als zentraler Einstiegspunkt implementiert (via Helm)
 - ✅ Nginx Routing für alle Services konfiguriert (Todo, Statistik, Pomodoro) (Helm)
 - ✅ CORS-Konfiguration für API- und OTel-Endpunkte implementiert (Helm)
 - ✅ Nginx Routing für den OTel-Collector-Endpunkt (Helm)
 - ✅ Service-Alias für den Java-Todo-Service erstellt (Helm)
 - ✅ GitHub Actions Workflow für Build, Push (GHCR) & Deploy (OpenShift via Helm)
+- ✅ "Deploy-only"-Option im GitHub Actions Workflow für effiziente Deployments
 
 ### Anwendungsservices
 - ✅ Java Todo Service mit PostgreSQL-Integration
@@ -152,8 +165,8 @@
 ## Was noch zu implementieren ist
 
 ### Infrastruktur
+- ❌ Frontend-Fix in OpenShift (statische HTML-Seite durch Angular-App ersetzen)
 - Feinabstimmung der Ressourcenlimits/-requests für Kubernetes-Deployments
-- Implementierung von Health Checks und Readiness Probes für alle Services in K8s
 - Optimierung der Nginx Gateway-Konfiguration für Produktionsumgebungen (optional)
 
 ### Anwendungsservices
@@ -165,18 +178,17 @@
 
 ## Bekannte Probleme und Herausforderungen
 
+- Frontend in OpenShift zeigt statische HTML-Seite statt Angular-App (Verursacht durch ConfigMap-Mount)
 - Grafana Dashboards (importiert oder Standard) zeigen teilweise "No Data", da Metrik-Namen/Labels nicht übereinstimmen. Müssen angepasst werden.
 - Gelegentliche Verzögerungen bei der ersten Anfrage an den Python Pomodoro Service (Cold Start).
 - Go Service Logging: OTel Logging für Go ist aufgrund von Modul-Inkompatibilitäten noch nicht implementiert (depriorisiert).
 
 ## Nächste Prioritäten
 
-1. Erstellen/Anpassen einer Basisversion der Grafana-Dashboards für Monitoring
-2. Ressourcenlimits/-requests für alle Kubernetes-Deployments definieren
-3. Dokumentation für den gesamten Technologie-Stack und Deployment-Prozess fertigstellen (READMEs, Memory Bank)
-4. Implementierung von Health Checks und Readiness Probes für Kubernetes
-
-4. Implementierung von Health Checks und Readiness Probes für Kubernetes 
+1. Frontend-Fix in OpenShift (Entfernen der Frontend-ConfigMap und Verwendung des Angular-Images)
+2. Erstellen/Anpassen einer Basisversion der Grafana-Dashboards für Monitoring
+3. Ressourcenlimits/-requests für alle Kubernetes-Deployments optimieren
+4. Dokumentation für den gesamten Technologie-Stack und Deployment-Prozess fertigstellen (READMEs, Memory Bank)
 
 ## OpenShift Compatibility Updates
 
@@ -184,9 +196,9 @@
 
 1. Updated the Kubernetes Helm chart to be compatible with OpenShift security requirements:
    - Modified frontend deployment to use port 8080 instead of 80
-   - Added security context with non-root user (runAsUser: 101) to frontend deployment
+   - Added security context with non-root user (runAsUser: 1006530000) to frontend deployment
    - Updated NGINX gateway to listen on port 8080 instead of 80
-   - Added security context with non-root user (runAsUser: 101) to NGINX gateway
+   - Added security context with non-root user (runAsUser: 1006530000) to NGINX gateway
    - Added proper security context for PostgreSQL (runAsUser: 26)
 
 2. Improved the Helm chart structure:
@@ -201,10 +213,23 @@
    - Updated NOTES.txt with useful information after installation
    - Updated memory bank documentation to reflect the changes
 
+4. GitHub Actions Workflow Improvements:
+   - Created a CI/CD workflow for building and deploying to OpenShift
+   - Added "deploy-only" option to deploy existing images without rebuilding
+   - Implemented conditional builds based on file changes
+   - Added OpenShift login and Helm deployment/uninstallation steps
+
+### Issues Identified:
+
+1. Frontend in OpenShift displays static HTML page (from ConfigMap) instead of Angular app
+   - Solution: Remove frontend ConfigMap mount from frontend-deployment.yaml
+   - Use the Angular frontend image directly without overriding content
+   - Deploy using the "deploy-only" option in GitHub Actions workflow
+
 ### Next steps for OpenShift deployment:
 
-1. Test the Helm chart deployment on an OpenShift cluster
-2. Enable and configure the backend services
-3. Configure the observability stack components
-4. Implement network policies for better security
-5. Create dedicated ServiceAccounts with appropriate permissions 
+1. Fix the frontend issue by deploying without the static ConfigMap
+2. Fine-tune resource limits and requests for better performance
+3. Create/adjust Grafana dashboards for monitoring in OpenShift
+4. Implement network policies for better security (optional)
+5. Create dedicated ServiceAccounts with appropriate permissions (optional) 
