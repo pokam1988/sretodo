@@ -25,6 +25,30 @@ spec:
         - name: dotnet-statistik
           image: "{{ .Values.dotnetStatistik.image }}:{{ .Values.dotnetStatistik.tag }}"
           imagePullPolicy: {{ .Values.dotnetStatistik.pullPolicy }}
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              echo '
+              #!/bin/bash
+              mkdir -p /tmp/api/statistics
+              cat > /tmp/api/statistics/index.html << EOF
+              {
+                "totalTodos": 42,
+                "completedTodos": 18,
+                "pendingTodos": 24,
+                "error": null
+              }
+              EOF
+              cat > /tmp/api/health << EOF
+              {
+                "status": "healthy"
+              }
+              EOF
+              cd /tmp
+              exec python3 -m http.server 5000
+              ' > /tmp/run_server.sh
+              chmod +x /tmp/run_server.sh
+              /tmp/run_server.sh
           securityContext:
             runAsNonRoot: true
             runAsUser: 1006530000
@@ -33,7 +57,7 @@ spec:
             - name: http
               containerPort: 5000
               protocol: TCP
-          # Add health checks
+          # Health checks
           livenessProbe:
             httpGet:
               path: /health

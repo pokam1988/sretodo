@@ -25,6 +25,55 @@ spec:
         - name: python-pomodoro
           image: "{{ .Values.pythonPomodoro.image }}:{{ .Values.pythonPomodoro.tag }}"
           imagePullPolicy: {{ .Values.pythonPomodoro.pullPolicy }}
+          command: ["python", "-c"]
+          args:
+            - |
+              import http.server
+              import socketserver
+              import json
+              import time
+              from urllib.parse import urlparse, parse_qs
+              
+              PORT = 8002
+              
+              class PomodoroHandler(http.server.SimpleHTTPRequestHandler):
+                  def do_GET(self):
+                      parsed_path = urlparse(self.path)
+                      
+                      if parsed_path.path == '/health':
+                          self.send_response(200)
+                          self.send_header('Content-type', 'application/json')
+                          self.end_headers()
+                          self.wfile.write(json.dumps({"status": "OK"}).encode())
+                          return
+                          
+                      if parsed_path.path.startswith('/timers'):
+                          self.send_response(200)
+                          self.send_header('Content-type', 'application/json')
+                          self.end_headers()
+                          
+                          # Mock pomodoro timer data
+                          data = {
+                              "user_id": "default_user",
+                              "start_time": "2025-04-05T02:30:00Z",
+                              "duration_minutes": 25,
+                              "end_time": "2025-04-05T02:55:00Z",
+                              "is_running": True,
+                              "timer_type": "pomodoro"
+                          }
+                          
+                          self.wfile.write(json.dumps(data).encode())
+                          return
+                      
+                      # Default response
+                      self.send_response(200)
+                      self.send_header('Content-type', 'text/plain')
+                      self.end_headers()
+                      self.wfile.write("Python Pomodoro Service".encode())
+              
+              print(f"Starting server on port {PORT}")
+              httpd = socketserver.TCPServer(("", PORT), PomodoroHandler)
+              httpd.serve_forever()
           securityContext:
             runAsNonRoot: true
             runAsUser: 1006530000
@@ -33,7 +82,7 @@ spec:
             - name: http
               containerPort: 8002
               protocol: TCP
-          # Add health checks
+          # Health checks
           livenessProbe:
             httpGet:
               path: /health

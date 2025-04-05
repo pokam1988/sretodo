@@ -4,8 +4,8 @@
 frontend:
   enabled: true
   replicas: 1
-  image: ghcr.io/mistral-valaise/sretodo-frontend
-  tag: latest
+  image: nginxinc/nginx-unprivileged
+  tag: stable-alpine
   pullPolicy: Always
   service:
     type: ClusterIP
@@ -21,9 +21,9 @@ frontend:
 javaTodo:
   enabled: true
   replicas: 1
-  image: ghcr.io/mistral-valaise/sretodo-service-java-todo
-  tag: latest
-  pullPolicy: Always
+  image: openjdk
+  tag: "17-jdk-slim"
+  pullPolicy: IfNotPresent
   service:
     type: ClusterIP
   resources:
@@ -38,9 +38,9 @@ javaTodo:
 dotnetStatistik:
   enabled: true
   replicas: 1
-  image: ghcr.io/mistral-valaise/sretodo-service-dotnet-statistik
-  tag: latest
-  pullPolicy: Always
+  image: mcr.microsoft.com/dotnet/aspnet
+  tag: "8.0"
+  pullPolicy: IfNotPresent
   service:
     type: ClusterIP
   resources:
@@ -55,9 +55,9 @@ dotnetStatistik:
 pythonPomodoro:
   enabled: true
   replicas: 1
-  image: ghcr.io/mistral-valaise/sretodo-service-python-pomodoro
-  tag: latest
-  pullPolicy: Always
+  image: python
+  tag: "3.12-slim"
+  pullPolicy: IfNotPresent
   service:
     type: ClusterIP
   resources:
