@@ -94,7 +94,7 @@ postgres:
 
 # Observability Stack
 observabilityStack:
-  enabled: true
+  enabled: false
 
   # OpenTelemetry Collector
   otelCollector:
