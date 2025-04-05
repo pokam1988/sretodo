@@ -33,8 +33,8 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Der Pfad /app/dist/frontend-angular/browser muss ggf. an den Output von 'ng build' angepasst werden (siehe angular.json)
 COPY --from=build /app/dist/frontend-angular/browser /usr/share/nginx/html
 
-# Exponiere Port 80 (Standard Nginx Port)
-EXPOSE 80
+# Exponiere Port 8080 (für OpenShift Kompatibilität)
+EXPOSE 8080
 
 # Standard Nginx Kommando wird ausgeführt (startet Nginx im Vordergrund)
 # CMD ["nginx", "-g", "daemon off;"]
