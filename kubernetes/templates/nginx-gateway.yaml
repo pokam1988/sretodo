@@ -82,6 +82,7 @@ data:
             proxy_set_header X-Forwarded-Proto $scheme;
         }
 
+        {{- if .Values.sretodoJavaTodo.enabled }}
         # Java Todo API
         location /api/todos/ {
             proxy_pass http://sretodo-java-todo:8080/;
@@ -90,7 +91,9 @@ data:
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
         }
+        {{- end }}
 
+        {{- if .Values.sretodoDotnetStatistik.enabled }}
         # .NET Statistik API
         location /api/statistik/ {
             proxy_pass http://sretodo-dotnet-statistik:5000/;
@@ -99,7 +102,9 @@ data:
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
         }
+        {{- end }}
 
+        {{- if .Values.sretodoPythonPomodoro.enabled }}
         # Python Pomodoro API
         location /api/pomodoro/ {
             proxy_pass http://sretodo-python-pomodoro:8000/;
@@ -108,6 +113,7 @@ data:
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
         }
+        {{- end }}
     }
 ---
 apiVersion: v1
