@@ -1,0 +1,116 @@
+# Default values for SRE ToDo MVP Demo
+
+# Frontend Angular Application
+sretodoFrontend:
+  enabled: true
+  image:
+    repository: ghcr.io/mistral-valaise/sretodo-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 80
+
+# Java Todo Service
+sretodoJavaTodo:
+  enabled: true
+  image:
+    repository: ghcr.io/mistral-valaise/sretodo-java-todo
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 8080
+
+# .NET Statistics Service
+sretodoDotnetStatistik:
+  enabled: true
+  image:
+    repository: ghcr.io/mistral-valaise/sretodo-dotnet-statistik
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 5000
+
+# Python Pomodoro Service
+sretodoPythonPomodoro:
+  enabled: true
+  image:
+    repository: ghcr.io/mistral-valaise/sretodo-python-pomodoro
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 8000
+
+# PostgreSQL Database
+sretodoPostgres:
+  enabled: true
+  image:
+    repository: postgres
+    tag: 14-alpine
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 5432
+  persistence:
+    enabled: true
+    size: 1Gi
+  env:
+    POSTGRES_USER: admin
+    POSTGRES_PASSWORD: secret
+    POSTGRES_DB: sretodo
+
+# Observability Stack (OpenTelemetry, Prometheus, Tempo, Loki, Grafana)
+sretodoObservability:
+  enabled: true
+  otelcollector:
+    enabled: true
+    image:
+      repository: otel/opentelemetry-collector-contrib
+      tag: latest
+      pullPolicy: IfNotPresent
+  prometheus:
+    enabled: true
+    image:
+      repository: prom/prometheus
+      tag: latest
+      pullPolicy: IfNotPresent
+  tempo:
+    enabled: true
+    image:
+      repository: grafana/tempo
+      tag: latest
+      pullPolicy: IfNotPresent
+  loki:
+    enabled: true
+    image:
+      repository: grafana/loki
+      tag: latest
+      pullPolicy: IfNotPresent
+  grafana:
+    enabled: true
+    image:
+      repository: grafana/grafana
+      tag: latest
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 3000
+    adminPassword: prom-operator
+
+# NGINX Gateway
+sretodoNginxGateway:
+  enabled: true
+  image:
+    repository: nginx
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
