@@ -1,13 +1,13 @@
-{{- if .Values.sretodoNginxGateway.enabled }}
+{{- if .Values.nginxGateway.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sretodo-nginx-gateway
+  name: {{ .Release.Name }}-nginx-gateway
   labels:
     {{- include "sretodo.labels" . | nindent 4 }}
     app.kubernetes.io/component: nginx-gateway
 spec:
-  replicas: 1
+  replicas: {{ .Values.nginxGateway.replicas }}
   selector:
     matchLabels:
       {{- include "sretodo.selectorLabels" . | nindent 6 }}
@@ -18,13 +18,15 @@ spec:
         {{- include "sretodo.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: nginx-gateway
     spec:
-      # Use OpenShift compliant security context (empty)
-      securityContext: {}
+      securityContext:
+        fsGroup: 101
       containers:
-        - name: {{ .Chart.Name }}-nginx-gateway
-          # No container-level securityContext
-          image: "{{ .Values.sretodoNginxGateway.image.repository }}:{{ .Values.sretodoNginxGateway.image.tag | default "latest" }}"
-          imagePullPolicy: {{ .Values.sretodoNginxGateway.image.pullPolicy }}
+        - name: nginx-gateway
+          image: "{{ .Values.nginxGateway.image }}:{{ .Values.nginxGateway.tag }}"
+          imagePullPolicy: {{ .Values.nginxGateway.pullPolicy }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 101
           ports:
             - name: http
               containerPort: 8080
@@ -49,10 +51,12 @@ spec:
               mountPath: /var/run
             - name: nginx-tmp
               mountPath: /tmp
+          resources:
+            {{- toYaml .Values.nginxGateway.resources | nindent 12 }}
       volumes:
         - name: nginx-config
           configMap:
-            name: sretodo-nginx-config
+            name: {{ .Release.Name }}-nginx-config
         - name: nginx-cache
           emptyDir: {}
         - name: nginx-run
@@ -63,7 +67,7 @@ spec:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: sretodo-nginx-config
+  name: {{ .Release.Name }}-nginx-config
   labels:
     {{- include "sretodo.labels" . | nindent 4 }}
     app.kubernetes.io/component: nginx-gateway
@@ -89,7 +93,7 @@ data:
 
         {{- if .Values.dotnetStatistik.enabled }}
         location /api/statistik {
-            proxy_pass http://{{ .Release.Name }}-dotnet-statistik:80;
+            proxy_pass http://{{ .Release.Name }}-dotnet-statistik:5000;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
         }
@@ -107,14 +111,14 @@ data:
 apiVersion: v1
 kind: Service
 metadata:
-  name: sretodo-nginx-gateway
+  name: {{ .Release.Name }}-nginx-gateway
   labels:
     {{- include "sretodo.labels" . | nindent 4 }}
     app.kubernetes.io/component: nginx-gateway
 spec:
-  type: {{ .Values.sretodoNginxGateway.service.type }}
+  type: {{ .Values.nginxGateway.service.type }}
   ports:
-    - port: {{ .Values.sretodoNginxGateway.service.port }}
+    - port: 80
       targetPort: http
       protocol: TCP
       name: http
