@@ -193,12 +193,9 @@ jobs:
             --namespace ${{ secrets.OPENSHIFT_NAMESPACE }} \
             --set sretodoFrontend.image.repository=${{ needs.build-and-push.outputs.image_repo_frontend }} \
             --set sretodoFrontend.image.tag=${{ needs.build-and-push.outputs.image_tag }} \
-            --set sretodoJavaTodo.image.repository=${{ needs.build-and-push.outputs.image_repo_java }} \
-            --set sretodoJavaTodo.image.tag=${{ needs.build-and-push.outputs.image_tag }} \
-            --set sretodoDotnetStatistik.image.repository=${{ needs.build-and-push.outputs.image_repo_dotnet }} \
-            --set sretodoDotnetStatistik.image.tag=${{ needs.build-and-push.outputs.image_tag }} \
-            --set sretodoPythonPomodoro.image.repository=${{ needs.build-and-push.outputs.image_repo_python }} \
-            --set sretodoPythonPomodoro.image.tag=${{ needs.build-and-push.outputs.image_tag }} \
+            --set sretodoJavaTodo.enabled=false \
+            --set sretodoDotnetStatistik.enabled=false \
+            --set sretodoPythonPomodoro.enabled=false \
             --set sretodoPostgres.enabled=true \
             --set sretodoObservability.enabled=true \
             --set sretodoNginxGateway.enabled=true
