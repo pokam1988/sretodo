@@ -10,7 +10,7 @@ sretodoFrontend:
   replicaCount: 1
   service:
     type: ClusterIP
-    port: 80
+    port: 80 # Service port remains 80 (external interface)
 
 # Java Todo Service
 sretodoJavaTodo:
@@ -113,4 +113,4 @@ sretodoNginxGateway:
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
-    port: 80
+    port: 80 # Service port remains 80 (external interface)
