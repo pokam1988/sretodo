@@ -49,6 +49,15 @@ spec:
             port: 8080
           initialDelaySeconds: 20
           periodSeconds: 30
+        volumeMounts:
+        - name: nginx-cache
+          mountPath: /var/cache/nginx
+        - name: nginx-run
+          mountPath: /var/run
+        - name: nginx-tmp
+          mountPath: /tmp
+        - name: frontend-content
+          mountPath: /usr/share/nginx/html
       volumes:
         - name: nginx-cache
           emptyDir: {}
@@ -56,6 +65,9 @@ spec:
           emptyDir: {}
         - name: nginx-tmp
           emptyDir: {}
+        - name: frontend-content
+          configMap:
+            name: {{ .Release.Name }}-frontend-content
 ---
 apiVersion: v1
 kind: Service

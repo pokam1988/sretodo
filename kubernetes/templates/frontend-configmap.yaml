@@ -1,0 +1,98 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-frontend-content
+  labels:
+    app: sretodo
+    component: frontend
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>SRE Todo App</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          margin: 0;
+          padding: 20px;
+          background-color: #f5f5f5;
+        }
+        .container {
+          max-width: 800px;
+          margin: 0 auto;
+          background: white;
+          padding: 20px;
+          border-radius: 8px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+          color: #333;
+          text-align: center;
+        }
+        .todo-list {
+          margin-top: 20px;
+        }
+        .todo-item {
+          padding: 10px;
+          border-bottom: 1px solid #eee;
+          display: flex;
+          align-items: center;
+        }
+        .todo-item input[type="checkbox"] {
+          margin-right: 10px;
+        }
+        .add-todo {
+          margin-top: 20px;
+          display: flex;
+        }
+        .add-todo input {
+          flex: 1;
+          padding: 10px;
+          border: 1px solid #ddd;
+          border-radius: 4px 0 0 4px;
+        }
+        .add-todo button {
+          padding: 10px 15px;
+          background: #4CAF50;
+          color: white;
+          border: none;
+          border-radius: 0 4px 4px 0;
+          cursor: pointer;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>SRE Todo App</h1>
+        <div class="todo-list">
+          <div class="todo-item">
+            <input type="checkbox" id="todo1">
+            <label for="todo1">Deploy SRE Todo App</label>
+          </div>
+          <div class="todo-item">
+            <input type="checkbox" id="todo2">
+            <label for="todo2">Set up monitoring with Prometheus</label>
+          </div>
+          <div class="todo-item">
+            <input type="checkbox" id="todo3">
+            <label for="todo3">Configure OpenTelemetry collector</label>
+          </div>
+          <div class="todo-item">
+            <input type="checkbox" id="todo4">
+            <label for="todo4">Implement tracing with Tempo</label>
+          </div>
+          <div class="todo-item">
+            <input type="checkbox" id="todo5">
+            <label for="todo5">Set up log aggregation with Loki</label>
+          </div>
+        </div>
+        <div class="add-todo">
+          <input type="text" placeholder="Add a new task...">
+          <button>Add</button>
+        </div>
+      </div>
+    </body>
+    </html> 

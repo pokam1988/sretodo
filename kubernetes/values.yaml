@@ -4,8 +4,8 @@
 frontend:
   enabled: true
   replicas: 1
-  image: ghcr.io/mistral-valaise/sretodo-frontend
-  tag: latest
+  image: nginxinc/nginx-unprivileged
+  tag: stable-alpine
   pullPolicy: Always
   service:
     type: ClusterIP
