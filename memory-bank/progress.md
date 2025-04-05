@@ -174,4 +174,37 @@
 1. Erstellen/Anpassen einer Basisversion der Grafana-Dashboards für Monitoring
 2. Ressourcenlimits/-requests für alle Kubernetes-Deployments definieren
 3. Dokumentation für den gesamten Technologie-Stack und Deployment-Prozess fertigstellen (READMEs, Memory Bank)
+4. Implementierung von Health Checks und Readiness Probes für Kubernetes
+
 4. Implementierung von Health Checks und Readiness Probes für Kubernetes 
+
+## OpenShift Compatibility Updates
+
+### What has been completed:
+
+1. Updated the Kubernetes Helm chart to be compatible with OpenShift security requirements:
+   - Modified frontend deployment to use port 8080 instead of 80
+   - Added security context with non-root user (runAsUser: 101) to frontend deployment
+   - Updated NGINX gateway to listen on port 8080 instead of 80
+   - Added security context with non-root user (runAsUser: 101) to NGINX gateway
+   - Added proper security context for PostgreSQL (runAsUser: 26)
+
+2. Improved the Helm chart structure:
+   - Restructured the values.yaml file for better organization
+   - Updated component naming to be more consistent
+   - Added conditional templates based on component enablement
+   - Added resource limits and requests for all components
+
+3. Enhanced documentation:
+   - Updated Chart.yaml with better metadata
+   - Created comprehensive README.md for the Helm chart
+   - Updated NOTES.txt with useful information after installation
+   - Updated memory bank documentation to reflect the changes
+
+### Next steps for OpenShift deployment:
+
+1. Test the Helm chart deployment on an OpenShift cluster
+2. Enable and configure the backend services
+3. Configure the observability stack components
+4. Implement network policies for better security
+5. Create dedicated ServiceAccounts with appropriate permissions 

@@ -113,4 +113,56 @@ Der Fokus liegt auf der Stabilisierung und Verbesserung des Kubernetes-Deploymen
 
 - Spring Boot REST Controller erwarten in der Standardkonfiguration Pfade ohne abschließenden Slash
 - Nginx-Proxy-Pass-Konfiguration muss an die erwartete Pfadstruktur der Backend-Services angepasst werden
-- Vollständige CORS-Konfiguration ist entscheidend für die korrekte Funktion von Frontend-Backend-Kommunikation 
+- Vollständige CORS-Konfiguration ist entscheidend für die korrekte Funktion von Frontend-Backend-Kommunikation
+
+## Current Focus
+
+We are currently focused on making the Kubernetes deployment of the SRE Todo application compatible with OpenShift. The specific challenges we're addressing are:
+
+1. Ensuring containers run as non-root users with proper security contexts
+2. Changing container ports from 80 to 8080 where needed (primarily for frontend and NGINX)
+3. Updating the Helm chart structure to better organize services and configurations
+4. Ensuring consistent naming and templating across all resources
+
+## Recent Changes
+
+1. Updated `frontend-deployment.yaml`:
+   - Changed containerPort from 80 to 8080
+   - Added security context to run as non-root user (runAsUser: 101)
+   - Updated service to map port 80 to targetPort 8080
+
+2. Updated `nginx-gateway.yaml`:
+   - Changed nginx to listen on port 8080 instead of 80
+   - Added conditional locations based on service enablement flags
+   - Added security context to run as non-root user (runAsUser: 101)
+   - Updated service to map port 80 to targetPort 8080
+
+3. Updated `postgres-deployment.yaml`:
+   - Added proper security context for PostgreSQL (runAsUser: 26)
+   - Updated to use the new values structure
+   - Added resource limits and requests
+
+4. Updated `values.yaml`:
+   - Restructured the values file to use more consistent naming
+   - Added resource limits and requests for all components
+   - Updated image references to use the correct repositories and tags
+
+5. Updated `Chart.yaml` and documentation:
+   - Updated the chart metadata and description
+   - Added keywords for better discoverability
+   - Updated README.md with deployment instructions for OpenShift
+
+## Next Steps
+
+1. Test the Helm chart deployment on a Kubernetes/OpenShift environment
+2. Enable and configure the backend services (Java Todo, .NET Statistik, Python Pomodoro)
+3. Configure the observability stack components (OpenTelemetry Collector, Prometheus, Tempo, Loki, Grafana)
+4. Set up the appropriate network policies and security contexts for all components
+5. Document the OpenShift-specific considerations and deployment steps
+
+## Active Decisions and Considerations
+
+1. We've decided to run containers as non-root users with specific UIDs to comply with OpenShift security policies
+2. We're using port 8080 for web services instead of port 80 to avoid requiring root privileges
+3. We're making service lookups dynamic using conditional templating in the NGINX configuration
+4. We're using consistent naming conventions across all components for better maintainability 

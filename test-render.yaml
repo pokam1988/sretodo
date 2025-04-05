@@ -1,0 +1,934 @@
+---
+# Source: sretodo/templates/nginx-gateway.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: release-name-nginx-config
+  labels:
+    helm.sh/chart: sretodo-0.1.0
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: nginx-gateway
+data:
+  default.conf: |
+    server {
+        listen 8080;
+        server_name localhost;
+
+        location / {
+            proxy_pass http://release-name-frontend;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+    }
+---
+# Source: sretodo/templates/observability-stack.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: release-name-otel-collector-config
+  labels:
+    helm.sh/chart: sretodo-0.1.0
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: otel-collector
+data:
+  config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+          http:
+
+    processors:
+      batch:
+        timeout: 1s
+
+    exporters:
+      prometheus:
+        endpoint: "0.0.0.0:8889"
+      otlp/tempo:
+        endpoint: release-name-tempo:4317
+        tls:
+          insecure: true
+      loki:
+        endpoint: http://release-name-loki:3100/loki/api/v1/push
+
+    service:
+      pipelines:
+        metrics:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [prometheus]
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp/tempo]
+        logs:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [loki]
+---
+# Source: sretodo/templates/observability-stack.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: release-name-prometheus-config
+  labels:
+    helm.sh/chart: sretodo-0.1.0
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: prometheus
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+
+    scrape_configs:
+      - job_name: 'otel-collector'
+        static_configs:
+          - targets: ['release-name-otel-collector:8889']
+---
+# Source: sretodo/templates/observability-stack.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: release-name-tempo-config
+  labels:
+    helm.sh/chart: sretodo-0.1.0
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: tempo
+data:
+  tempo.yaml: |
+    server:
+      http_listen_port: 3200
+
+    distributor:
+      receivers:
+        otlp:
+          protocols:
+            grpc:
+
+    ingester:
+      max_block_duration: 5m
+      trace_idle_period: 10s
+
+    compactor:
+      compaction:
+        block_retention: 1h
+
+    storage:
+      trace:
+        backend: local
+        local:
+          path: /tmp/tempo
+        pool:
+          max_workers: 100
+          queue_depth: 10000
+---
+# Source: sretodo/templates/observability-stack.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: release-name-loki-config
+  labels:
+    helm.sh/chart: sretodo-0.1.0
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: loki
+data:
+  local-config.yaml: |
+    auth_enabled: false
+
+    server:
+      http_listen_port: 3100
+
+    ingester:
+      lifecycler:
+        address: 127.0.0.1
+        ring:
+          kvstore:
+            store: inmemory
+          replication_factor: 1
+        final_sleep: 0s
+      chunk_idle_period: 5m
+      chunk_retain_period: 30s
+
+    schema_config:
+      configs:
+        - from: 2020-10-24
+          store: boltdb-shipper
+          object_store: filesystem
+          schema: v11
+          index:
+            prefix: index_
+            period: 24h
+
+    storage_config:
+      boltdb_shipper:
+        active_index_directory: /loki/boltdb-shipper-active
+        cache_location: /loki/boltdb-shipper-cache
+        cache_ttl: 24h
+      filesystem:
+        directory: /loki/chunks
+
+    limits_config:
+      reject_old_samples: true
+      reject_old_samples_max_age: 168h
+---
+# Source: sretodo/templates/observability-stack.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: release-name-grafana-datasources
+  labels:
+    helm.sh/chart: sretodo-0.1.0
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: grafana
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://release-name-prometheus:9090
+        isDefault: true
+      - name: Tempo
+        type: tempo
+        access: proxy
+        url: http://release-name-tempo:3200
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://release-name-loki:3100
+---
+# Source: sretodo/templates/postgres-deployment.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: release-name-postgres-pvc
+  labels:
+    helm.sh/chart: sretodo-0.1.0
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: postgres
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+# Source: sretodo/templates/frontend-deployment.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-frontend
+  labels:
+    app: sretodo
+    component: frontend
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: sretodo
+    component: frontend
+---
+# Source: sretodo/templates/nginx-gateway.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-nginx-gateway
+  labels:
+    helm.sh/chart: sretodo-0.1.0
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: nginx-gateway
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/component: nginx-gateway
+---
+# Source: sretodo/templates/observability-stack.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-otel-collector
+  labels:
+    helm.sh/chart: sretodo-0.1.0
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: otel-collector
+spec:
+  type: ClusterIP
+  ports:
+    - port: 4317
+      targetPort: otlp-grpc
+      protocol: TCP
+      name: otlp-grpc
+    - port: 4318
+      targetPort: otlp-http
+      protocol: TCP
+      name: otlp-http
+    - port: 8889
+      targetPort: prometheus
+      protocol: TCP
+      name: prometheus
+  selector:
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/component: otel-collector
+---
+# Source: sretodo/templates/observability-stack.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-prometheus
+  labels:
+    helm.sh/chart: sretodo-0.1.0
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: prometheus
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9090
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/component: prometheus
+---
+# Source: sretodo/templates/observability-stack.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-tempo
+  labels:
+    helm.sh/chart: sretodo-0.1.0
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: tempo
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3200
+      targetPort: tempo
+      protocol: TCP
+      name: tempo
+    - port: 4317
+      targetPort: otlp-grpc
+      protocol: TCP
+      name: otlp-grpc
+  selector:
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/component: tempo
+---
+# Source: sretodo/templates/observability-stack.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-loki
+  labels:
+    helm.sh/chart: sretodo-0.1.0
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: loki
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3100
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/component: loki
+---
+# Source: sretodo/templates/observability-stack.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-grafana
+  labels:
+    helm.sh/chart: sretodo-0.1.0
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: grafana
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3000
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/component: grafana
+---
+# Source: sretodo/templates/postgres-deployment.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-postgres
+  labels:
+    helm.sh/chart: sretodo-0.1.0
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: postgres
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: postgres
+      protocol: TCP
+      name: postgres
+  selector:
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/component: postgres
+---
+# Source: sretodo/templates/frontend-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: release-name-frontend
+  labels:
+    app: sretodo
+    component: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sretodo
+      component: frontend
+  template:
+    metadata:
+      labels:
+        app: sretodo
+        component: frontend
+    spec:
+      securityContext:
+        fsGroup: 1006530000
+      containers:
+      - name: frontend
+        image: nginxinc/nginx-unprivileged:stable-alpine
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: http
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1006530000
+          runAsGroup: 1006530000
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 20
+          periodSeconds: 30
+      volumes:
+        - name: nginx-cache
+          emptyDir: {}
+        - name: nginx-run
+          emptyDir: {}
+        - name: nginx-tmp
+          emptyDir: {}
+---
+# Source: sretodo/templates/nginx-gateway.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: release-name-nginx-gateway
+  labels:
+    helm.sh/chart: sretodo-0.1.0
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: nginx-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sretodo
+      app.kubernetes.io/instance: release-name
+      app.kubernetes.io/component: nginx-gateway
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: sretodo
+        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/component: nginx-gateway
+    spec:
+      securityContext:
+        fsGroup: 1006530000
+      containers:
+        - name: nginx-gateway
+          image: "nginx:alpine"
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1006530000
+            runAsGroup: 1006530000
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: nginx-run
+              mountPath: /var/run
+            - name: nginx-tmp
+              mountPath: /tmp
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: release-name-nginx-config
+        - name: nginx-cache
+          emptyDir: {}
+        - name: nginx-run
+          emptyDir: {}
+        - name: nginx-tmp
+          emptyDir: {}
+---
+# Source: sretodo/templates/observability-stack.yaml
+# OpenTelemetry Collector
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: release-name-otel-collector
+  labels:
+    helm.sh/chart: sretodo-0.1.0
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: otel-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sretodo
+      app.kubernetes.io/instance: release-name
+      app.kubernetes.io/component: otel-collector
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: sretodo
+        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/component: otel-collector
+    spec:
+      securityContext:
+        fsGroup: 1006530000
+      containers:
+        - name: otel-collector
+          image: "otel/opentelemetry-collector-contrib:latest"
+          imagePullPolicy: Always
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1006530000
+            runAsGroup: 1006530000
+          ports:
+            - name: otlp-grpc
+              containerPort: 4317
+              protocol: TCP
+            - name: otlp-http
+              containerPort: 4318
+              protocol: TCP
+            - name: prometheus
+              containerPort: 8889
+              protocol: TCP
+          volumeMounts:
+            - name: otel-collector-config
+              mountPath: /etc/otelcol-contrib/config.yaml
+              subPath: config.yaml
+      volumes:
+        - name: otel-collector-config
+          configMap:
+            name: release-name-otel-collector-config
+---
+# Source: sretodo/templates/observability-stack.yaml
+# Prometheus
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: release-name-prometheus
+  labels:
+    helm.sh/chart: sretodo-0.1.0
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sretodo
+      app.kubernetes.io/instance: release-name
+      app.kubernetes.io/component: prometheus
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: sretodo
+        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/component: prometheus
+    spec:
+      securityContext:
+        fsGroup: 1006530000
+      containers:
+        - name: prometheus
+          image: "prom/prometheus:latest"
+          imagePullPolicy: Always
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1006530000
+            runAsGroup: 1006530000
+          ports:
+            - name: http
+              containerPort: 9090
+              protocol: TCP
+          volumeMounts:
+            - name: prometheus-config
+              mountPath: /etc/prometheus/prometheus.yml
+              subPath: prometheus.yml
+            - name: prometheus-data
+              mountPath: /prometheus
+      volumes:
+        - name: prometheus-config
+          configMap:
+            name: release-name-prometheus-config
+        - name: prometheus-data
+          emptyDir: {}
+---
+# Source: sretodo/templates/observability-stack.yaml
+# Tempo (Traces)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: release-name-tempo
+  labels:
+    helm.sh/chart: sretodo-0.1.0
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: tempo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sretodo
+      app.kubernetes.io/instance: release-name
+      app.kubernetes.io/component: tempo
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: sretodo
+        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/component: tempo
+    spec:
+      securityContext:
+        fsGroup: 1006530000
+      containers:
+        - name: tempo
+          image: "grafana/tempo:latest"
+          imagePullPolicy: Always
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1006530000
+            runAsGroup: 1006530000
+          ports:
+            - name: tempo
+              containerPort: 3200
+              protocol: TCP
+            - name: otlp-grpc
+              containerPort: 4317
+              protocol: TCP
+          volumeMounts:
+            - name: tempo-config
+              mountPath: /etc/tempo/tempo.yaml
+              subPath: tempo.yaml
+            - name: tempo-data
+              mountPath: /tmp/tempo
+      volumes:
+        - name: tempo-config
+          configMap:
+            name: release-name-tempo-config
+        - name: tempo-data
+          emptyDir: {}
+---
+# Source: sretodo/templates/observability-stack.yaml
+# Loki (Logs)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: release-name-loki
+  labels:
+    helm.sh/chart: sretodo-0.1.0
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: loki
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sretodo
+      app.kubernetes.io/instance: release-name
+      app.kubernetes.io/component: loki
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: sretodo
+        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/component: loki
+    spec:
+      securityContext:
+        fsGroup: 1006530000
+      containers:
+        - name: loki
+          image: "grafana/loki:latest"
+          imagePullPolicy: Always
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1006530000
+            runAsGroup: 1006530000
+          ports:
+            - name: http
+              containerPort: 3100
+              protocol: TCP
+          volumeMounts:
+            - name: loki-config
+              mountPath: /etc/loki/local-config.yaml
+              subPath: local-config.yaml
+            - name: loki-data
+              mountPath: /loki
+      volumes:
+        - name: loki-config
+          configMap:
+            name: release-name-loki-config
+        - name: loki-data
+          emptyDir: {}
+---
+# Source: sretodo/templates/observability-stack.yaml
+# Grafana
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: release-name-grafana
+  labels:
+    helm.sh/chart: sretodo-0.1.0
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sretodo
+      app.kubernetes.io/instance: release-name
+      app.kubernetes.io/component: grafana
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: sretodo
+        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/component: grafana
+    spec:
+      securityContext:
+        fsGroup: 1006530000
+      containers:
+        - name: grafana
+          image: "grafana/grafana:latest"
+          imagePullPolicy: Always
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1006530000
+            runAsGroup: 1006530000
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          volumeMounts:
+            - name: grafana-datasources
+              mountPath: /etc/grafana/provisioning/datasources
+              readOnly: true
+          env:
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: admin
+            - name: GF_AUTH_ANONYMOUS_ENABLED
+              value: "true"
+      volumes:
+        - name: grafana-datasources
+          configMap:
+            name: release-name-grafana-datasources
+---
+# Source: sretodo/templates/postgres-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: release-name-postgres
+  labels:
+    helm.sh/chart: sretodo-0.1.0
+    app.kubernetes.io/name: sretodo
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sretodo
+      app.kubernetes.io/instance: release-name
+      app.kubernetes.io/component: postgres
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: sretodo
+        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/component: postgres
+    spec:
+      # OpenShift compatible security context
+      securityContext:
+        fsGroup: 1006530000
+      containers:
+        - name: postgres
+          image: "postgres:13"
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1006530000
+            runAsGroup: 1006530000
+          ports:
+            - name: postgres
+              containerPort: 5432
+              protocol: TCP
+          # Add health checks
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - $(POSTGRES_USER)
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - $(POSTGRES_USER)
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          env:
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              value: postgres
+            - name: POSTGRES_DB
+              value: sretodo
+            # Allow write permissions for OpenShift
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: release-name-postgres-pvc
