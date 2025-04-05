@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sretodo-dotnet-statistik
+  labels:
+    {{- include "sretodo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: dotnet-statistik
+spec:
+  replicas: {{ .Values.sretodoDotnetStatistik.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "sretodo.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: dotnet-statistik
+  template:
+    metadata:
+      labels:
+        {{- include "sretodo.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: dotnet-statistik
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}-dotnet-statistik
+          image: "{{ .Values.sretodoDotnetStatistik.image.repository }}:{{ .Values.sretodoDotnetStatistik.image.tag | default "latest" }}"
+          imagePullPolicy: {{ .Values.sretodoDotnetStatistik.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 5000
+              protocol: TCP
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Host=sretodo-postgres;Port=5432;Database=sretodo;Username=$(POSTGRES_USER);Password=$(POSTGRES_PASSWORD)"
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: sretodo-postgres-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sretodo-postgres-secret
+                  key: POSTGRES_PASSWORD
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://sretodo-otel-collector:4317
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sretodo-dotnet-statistik
+  labels:
+    {{- include "sretodo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: dotnet-statistik
+spec:
+  type: {{ .Values.sretodoDotnetStatistik.service.type }}
+  ports:
+    - port: {{ .Values.sretodoDotnetStatistik.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "sretodo.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: dotnet-statistik
