@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sretodo-python-pomodoro
+  labels:
+    {{- include "sretodo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: python-pomodoro
+spec:
+  replicas: {{ .Values.sretodoPythonPomodoro.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "sretodo.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: python-pomodoro
+  template:
+    metadata:
+      labels:
+        {{- include "sretodo.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: python-pomodoro
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}-python-pomodoro
+          image: "{{ .Values.sretodoPythonPomodoro.image.repository }}:{{ .Values.sretodoPythonPomodoro.image.tag | default "latest" }}"
+          imagePullPolicy: {{ .Values.sretodoPythonPomodoro.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@sretodo-postgres:5432/sretodo"
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: sretodo-postgres-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sretodo-postgres-secret
+                  key: POSTGRES_PASSWORD
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://sretodo-otel-collector:4317
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sretodo-python-pomodoro
+  labels:
+    {{- include "sretodo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: python-pomodoro
+spec:
+  type: {{ .Values.sretodoPythonPomodoro.service.type }}
+  ports:
+    - port: {{ .Values.sretodoPythonPomodoro.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "sretodo.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: python-pomodoro
