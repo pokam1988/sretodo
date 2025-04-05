@@ -26,7 +26,8 @@ spec:
           name: http
         securityContext:
           runAsNonRoot: true
-          runAsUser: 101  # nginx user in nginx image
+          runAsUser: 1006530000
+          fsGroup: 1006530000
         resources:
           limits:
             cpu: {{ .Values.frontend.resources.limits.cpu }}

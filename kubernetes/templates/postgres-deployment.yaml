@@ -20,15 +20,15 @@ spec:
     spec:
       # OpenShift compatible security context
       securityContext:
-        fsGroup: 26
+        fsGroup: 1006530000
       containers:
         - name: postgres
           image: "{{ .Values.postgres.image }}:{{ .Values.postgres.tag }}"
           imagePullPolicy: {{ .Values.postgres.pullPolicy }}
           securityContext:
             runAsNonRoot: true
-            runAsUser: 26
-            runAsGroup: 26
+            runAsUser: 1006530000
+            runAsGroup: 1006530000
           ports:
             - name: postgres
               containerPort: 5432

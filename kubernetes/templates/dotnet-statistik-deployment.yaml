@@ -20,15 +20,15 @@ spec:
     spec:
       # OpenShift compatible security context
       securityContext:
-        fsGroup: 1000
+        fsGroup: 1006530000
       containers:
         - name: dotnet-statistik
           image: "{{ .Values.dotnetStatistik.image }}:{{ .Values.dotnetStatistik.tag }}"
           imagePullPolicy: {{ .Values.dotnetStatistik.pullPolicy }}
           securityContext:
             runAsNonRoot: true
-            runAsUser: 1000
-            runAsGroup: 1000
+            runAsUser: 1006530000
+            runAsGroup: 1006530000
           ports:
             - name: http
               containerPort: 5000

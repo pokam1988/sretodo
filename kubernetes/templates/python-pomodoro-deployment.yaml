@@ -20,15 +20,15 @@ spec:
     spec:
       # OpenShift compatible security context
       securityContext:
-        fsGroup: 1000
+        fsGroup: 1006530000
       containers:
         - name: python-pomodoro
           image: "{{ .Values.pythonPomodoro.image }}:{{ .Values.pythonPomodoro.tag }}"
           imagePullPolicy: {{ .Values.pythonPomodoro.pullPolicy }}
           securityContext:
             runAsNonRoot: true
-            runAsUser: 1000
-            runAsGroup: 1000
+            runAsUser: 1006530000
+            runAsGroup: 1006530000
           ports:
             - name: http
               containerPort: 8000
