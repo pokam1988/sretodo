@@ -1,3 +1,4 @@
+{{- if .Values.sretodoDotnetStatistik.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,6 +18,8 @@ spec:
         {{- include "sretodo.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: dotnet-statistik
     spec:
+      # OpenShift compatible security context
+      securityContext: {}
       containers:
         - name: {{ .Chart.Name }}-dotnet-statistik
           image: "{{ .Values.sretodoDotnetStatistik.image.repository }}:{{ .Values.sretodoDotnetStatistik.image.tag | default "latest" }}"
@@ -25,9 +28,22 @@ spec:
             - name: http
               containerPort: 5000
               protocol: TCP
+          # Add health checks
+          livenessProbe:
+            httpGet:
+              path: /health/liveness
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health/readiness
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
           env:
             - name: ConnectionStrings__DefaultConnection
-              value: "Host=sretodo-postgres;Port=5432;Database=sretodo;Username=$(POSTGRES_USER);Password=$(POSTGRES_PASSWORD)"
+              value: Host=sretodo-postgres;Port=5432;Database=sretodo;Username=$(POSTGRES_USER);Password=$(POSTGRES_PASSWORD)
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
@@ -58,3 +74,4 @@ spec:
   selector:
     {{- include "sretodo.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: dotnet-statistik
+{{- end }}
