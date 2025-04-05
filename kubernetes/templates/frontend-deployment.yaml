@@ -17,6 +17,8 @@ spec:
         app: sretodo
         component: frontend
     spec:
+      securityContext:
+        fsGroup: 1006530000
       containers:
       - name: frontend
         image: {{ .Values.frontend.image }}:{{ .Values.frontend.tag }}
@@ -27,7 +29,6 @@ spec:
         securityContext:
           runAsNonRoot: true
           runAsUser: 1006530000
-          fsGroup: 1006530000
         resources:
           limits:
             cpu: {{ .Values.frontend.resources.limits.cpu }}
