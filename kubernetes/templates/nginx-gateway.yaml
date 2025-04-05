@@ -27,6 +27,7 @@ spec:
           securityContext:
             runAsNonRoot: true
             runAsUser: 1006530000
+            runAsGroup: 1006530000
           ports:
             - name: http
               containerPort: 8080

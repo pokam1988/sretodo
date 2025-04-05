@@ -29,6 +29,7 @@ spec:
           securityContext:
             runAsNonRoot: true
             runAsUser: 1006530000
+            runAsGroup: 1006530000
           ports:
             - name: otlp-grpc
               containerPort: 4317
@@ -147,6 +148,7 @@ spec:
           securityContext:
             runAsNonRoot: true
             runAsUser: 1006530000
+            runAsGroup: 1006530000
           ports:
             - name: http
               containerPort: 9090
@@ -229,6 +231,7 @@ spec:
           securityContext:
             runAsNonRoot: true
             runAsUser: 1006530000
+            runAsGroup: 1006530000
           ports:
             - name: tempo
               containerPort: 3200
@@ -335,6 +338,7 @@ spec:
           securityContext:
             runAsNonRoot: true
             runAsUser: 1006530000
+            runAsGroup: 1006530000
           ports:
             - name: http
               containerPort: 3100
@@ -392,12 +396,10 @@ data:
         active_index_directory: /loki/boltdb-shipper-active
         cache_location: /loki/boltdb-shipper-cache
         cache_ttl: 24h
-        shared_store: filesystem
       filesystem:
         directory: /loki/chunks
 
     limits_config:
-      enforce_metric_name: false
       reject_old_samples: true
       reject_old_samples_max_age: 168h
 ---
@@ -448,6 +450,7 @@ spec:
           securityContext:
             runAsNonRoot: true
             runAsUser: 1006530000
+            runAsGroup: 1006530000
           ports:
             - name: http
               containerPort: 3000
