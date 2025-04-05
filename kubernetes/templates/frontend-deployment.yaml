@@ -21,7 +21,7 @@ spec:
       securityContext: {}
       containers:
         - name: {{ .Chart.Name }}-frontend
-          image: "{{ .Values.sretodoFrontend.image.repository }}:{{ .Values.sretodoFrontend.image.tag | default "latest" }}"
+          image: "{{ .Values.sretodoFrontend.image.repository }}:{{ .Values.sretodoFrontend.image.tag | default "stable-alpine" }}"
           imagePullPolicy: {{ .Values.sretodoFrontend.image.pullPolicy }}
           ports:
             - name: http
