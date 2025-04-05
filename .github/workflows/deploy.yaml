@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - dev
+      - feature-250404-start
 
 jobs:
   build-and-push:
