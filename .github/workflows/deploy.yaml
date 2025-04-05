@@ -16,14 +16,19 @@ jobs:
 
     outputs:
       image_tag: ${{ steps.meta-common.outputs.version }} # Git SHA als Tag
-      image_repo_frontend: ghcr.io/${{ github.repository_owner }}/sretodo-frontend
-      image_repo_java: ghcr.io/${{ github.repository_owner }}/sretodo-java-todo
-      image_repo_dotnet: ghcr.io/${{ github.repository_owner }}/sretodo-dotnet-statistik
-      image_repo_python: ghcr.io/${{ github.repository_owner }}/sretodo-python-pomodoro
+      image_repo_frontend: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-frontend
+      image_repo_java: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-java-todo
+      image_repo_dotnet: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-dotnet-statistik
+      image_repo_python: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-python-pomodoro
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set repository owner lowercase
+        id: lowercase
+        run: |
+          echo "repository_owner_lowercase=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -65,10 +70,10 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ghcr.io/${{ github.repository_owner }}/sretodo-frontend
-            ghcr.io/${{ github.repository_owner }}/sretodo-java-todo
-            ghcr.io/${{ github.repository_owner }}/sretodo-dotnet-statistik
-            ghcr.io/${{ github.repository_owner }}/sretodo-python-pomodoro
+            ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-frontend
+            ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-java-todo
+            ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-dotnet-statistik
+            ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-python-pomodoro
           tags: |
             type=sha,prefix=
 
@@ -78,22 +83,16 @@ jobs:
           context: ./frontend-angular
           push: true
           labels: ${{ steps.meta-common.outputs.labels }}
-          # Remove caching for now to fix error
-          # cache-from: type=gha
-          # cache-to: type=gha,mode=max
           file: ./frontend-angular/Dockerfile
-          tags: ghcr.io/${{ github.repository_owner }}/sretodo-frontend:${{ steps.meta-common.outputs.version }}
+          tags: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-frontend:${{ steps.meta-common.outputs.version }}
 
       - name: Build and push Java Todo image
         uses: docker/build-push-action@v5
         with:
           context: ./service-java-todo
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/sretodo-java-todo:${{ steps.meta-common.outputs.version }}
+          tags: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-java-todo:${{ steps.meta-common.outputs.version }}
           labels: ${{ steps.meta-common.outputs.labels }}
-          # Remove caching for now to fix error
-          # cache-from: type=gha
-          # cache-to: type=gha,mode=max
           file: ./service-java-todo/Dockerfile
 
       - name: Build and push .NET Statistik image
@@ -101,11 +100,8 @@ jobs:
         with:
           context: ./service-dotnet-statistik
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/sretodo-dotnet-statistik:${{ steps.meta-common.outputs.version }}
+          tags: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-dotnet-statistik:${{ steps.meta-common.outputs.version }}
           labels: ${{ steps.meta-common.outputs.labels }}
-          # Remove caching for now to fix error
-          # cache-from: type=gha
-          # cache-to: type=gha,mode=max
           file: ./service-dotnet-statistik/Dockerfile
 
       - name: Build and push Python Pomodoro image
@@ -113,11 +109,8 @@ jobs:
         with:
           context: ./service-python-pomodoro
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/sretodo-python-pomodoro:${{ steps.meta-common.outputs.version }}
+          tags: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-python-pomodoro:${{ steps.meta-common.outputs.version }}
           labels: ${{ steps.meta-common.outputs.labels }}
-          # Remove caching for now to fix error
-          # cache-from: type=gha
-          # cache-to: type=gha,mode=max
           file: ./service-python-pomodoro/Dockerfile
 
   deploy-to-openshift:
