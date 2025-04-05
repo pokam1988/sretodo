@@ -1,0 +1,26 @@
+Vielen Dank für die Installation der SRE ToDo MVP Demo!
+
+Ihre Anwendung wird nun bereitgestellt. Dies kann einige Minuten dauern.
+
+Um den Status der Pods zu überprüfen, führen Sie den folgenden Befehl aus:
+  kubectl get pods -n {{ .Release.Namespace }}
+
+Frontend URL:
+{{- if .Values.sretodoNginxGateway.enabled }}
+  Um auf die Frontend-Anwendung zuzugreifen, verwenden Sie einen der folgenden Wege:
+  - Port-Forwarding: kubectl port-forward svc/sretodo-nginx-gateway 8080:80 -n {{ .Release.Namespace }}
+    Dann können Sie die App unter http://localhost:8080 aufrufen.
+{{- else }}
+  Um auf die Frontend-Anwendung zuzugreifen, verwenden Sie:
+  - Port-Forwarding: kubectl port-forward svc/sretodo-frontend 8080:80 -n {{ .Release.Namespace }}
+    Dann können Sie die App unter http://localhost:8080 aufrufen.
+{{- end }}
+
+Grafana (für Observability):
+{{- if .Values.sretodoObservability.enabled }}
+  - Port-Forwarding: kubectl port-forward svc/sretodo-grafana 3000:3000 -n {{ .Release.Namespace }}
+    Dann können Sie Grafana unter http://localhost:3000 aufrufen.
+    Standardzugang: admin / {{ .Values.sretodoObservability.grafana.adminPassword }}
+{{- end }}
+
+HINWEIS: Es können weitere Konfigurationsschritte erforderlich sein, um die Anwendung vollständig einzurichten.
