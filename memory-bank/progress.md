@@ -124,53 +124,53 @@
 ### Infrastruktur
 - ✅ Docker-Compose-Setup für lokale Entwicklung
 - ✅ Kubernetes-Deployment mit Helm-Charts
-- ✅ Nginx Gateway als zentraler Einstiegspunkt implementiert
-- ✅ Nginx Routing für alle Services konfiguriert (Todo, Statistik, Pomodoro)
-- ✅ CORS-Konfiguration für alle API-Endpunkte implementiert
-- ✅ Nginx Routing für den OTel-Collector-Endpunkt
-- ✅ Service-Alias für den Java-Todo-Service erstellt
+- ✅ Nginx Gateway als zentraler Einstiegspunkt implementiert (via Helm)
+- ✅ Nginx Routing für alle Services konfiguriert (Todo, Statistik, Pomodoro) (Helm)
+- ✅ CORS-Konfiguration für API- und OTel-Endpunkte implementiert (Helm)
+- ✅ Nginx Routing für den OTel-Collector-Endpunkt (Helm)
+- ✅ Service-Alias für den Java-Todo-Service erstellt (Helm)
 
 ### Anwendungsservices
 - ✅ Java Todo Service mit PostgreSQL-Integration
 - ✅ .NET Statistik Service mit Todo Service-Integration
 - ✅ Python Pomodoro Service
-- ✅ Angular Frontend mit grundlegender Funktionalität
+- ✅ Angular Frontend mit grundlegender Funktionalität (Routing, CRUD, Pomodoro)
+- ✅ Angular Frontend mit OpenTelemetry-Tracing
 
 ### Observability
-- ✅ OpenTelemetry Collector konfiguriert
-- ✅ Prometheus für Metriken eingerichtet
-- ✅ Grafana für Visualisierung konfiguriert
-- ✅ Tempo für Traces eingerichtet
-- ✅ Loki für Logs konfiguriert
+- ✅ OpenTelemetry Collector konfiguriert (via Helm)
+- ✅ Prometheus für Metriken eingerichtet (via Helm)
+- ✅ Grafana für Visualisierung konfiguriert (via Helm)
+- ✅ Tempo für Traces eingerichtet (via Helm)
+- ✅ Loki für Logs konfiguriert (via Helm)
 - ✅ OpenTelemetry-Integration in den Java Todo Service
 - ✅ OpenTelemetry-Integration in den .NET Statistik Service
 - ✅ OpenTelemetry-Integration in den Python Pomodoro Service
+- ✅ OpenTelemetry-Integration in das Angular Frontend
 
 ## Was noch zu implementieren ist
 
 ### Infrastruktur
-- Feinabstimmung der Ressourcenlimits für Kubernetes-Deployments
-- Optimierung der Nginx Gateway-Konfiguration für Produktionsumgebungen
+- Feinabstimmung der Ressourcenlimits/-requests für Kubernetes-Deployments
+- Implementierung von Health Checks und Readiness Probes für alle Services in K8s
+- Optimierung der Nginx Gateway-Konfiguration für Produktionsumgebungen (optional)
 
 ### Anwendungsservices
-- Verbesserung der Fehlerbehandlung in allen Services
-- Implementierung von Health Checks und Readiness Probes
+- Verbesserung der Fehlerbehandlung in allen Services (optional für MVP)
 
 ### Observability
-- ⚠️ Frontend OpenTelemetry-Integration abschließen
-- Erstellen von umfassenden Grafana-Dashboards für Monitoring
-- Beispielhafte SLOs und Alerts definieren
+- Erstellen/Anpassen von umfassenden Grafana-Dashboards für Monitoring
+- Beispielhafte SLOs und Alerts definieren (optional für MVP)
 
 ## Bekannte Probleme und Herausforderungen
 
-- ✅ GELÖST: Die Todo-API-Pfade (Routing) hatten Probleme mit abschließenden Slashes, was zu 404-Fehlern führte
-- ✅ GELÖST: Der .NET Statistik Service konnte den Java Todo Service nicht unter dem erwarteten Namen erreichen
-- ✅ GELÖST: CORS-Probleme mit dem OpenTelemetry-Collector-Endpunkt für Frontend-Tracing
-- Gelegentliche Verzögerungen bei der ersten Anfrage an den Python Pomodoro Service (Cold Start)
+- Grafana Dashboards (importiert oder Standard) zeigen teilweise "No Data", da Metrik-Namen/Labels nicht übereinstimmen. Müssen angepasst werden.
+- Gelegentliche Verzögerungen bei der ersten Anfrage an den Python Pomodoro Service (Cold Start).
+- Go Service Logging: OTel Logging für Go ist aufgrund von Modul-Inkompatibilitäten noch nicht implementiert (depriorisiert).
 
 ## Nächste Prioritäten
 
-1. Frontend OpenTelemetry-Integration abschließen und testen
-2. Erstellen einer Basisversion der Grafana-Dashboards für Monitoring
-3. Ressourcenlimits für alle Kubernetes-Deployments definieren
-4. Dokumentation für den gesamten Technologie-Stack fertigstellen 
+1. Erstellen/Anpassen einer Basisversion der Grafana-Dashboards für Monitoring
+2. Ressourcenlimits/-requests für alle Kubernetes-Deployments definieren
+3. Dokumentation für den gesamten Technologie-Stack und Deployment-Prozess fertigstellen (READMEs, Memory Bank)
+4. Implementierung von Health Checks und Readiness Probes für Kubernetes 

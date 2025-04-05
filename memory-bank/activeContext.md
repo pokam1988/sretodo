@@ -2,7 +2,7 @@
 
 ## Aktueller Fokus
 
-Der Hauptfokus liegt nun darauf, die gesamte Anwendung für das Deployment auf Kubernetes vorzubereiten. Das `docker-compose.yml` Setup funktioniert stabil, und alle Services (außer Go-Logging) senden Telemetriedaten.
+Der Fokus liegt auf der Stabilisierung und Verbesserung des Kubernetes-Deployments. Dazu gehören die Erstellung funktionierender Grafana-Dashboards und die Definition von Ressourcenlimits für die Services. Die grundlegende Bereitstellung via Helm funktioniert.
 
 ## 2. Recent Activities
 
@@ -75,46 +75,29 @@ Der Hauptfokus liegt nun darauf, die gesamte Anwendung für das Deployment auf K
 
 ## Letzte Änderungen
 
-- **Service Python Pomodoro:** Umstellung von manueller OTel SDK-Initialisierung auf den Agent-basierten Ansatz (`opentelemetry-instrument`). Dies löste hartnäckige `ModuleNotFoundError`-Probleme.
-    - `requirements.txt` verwendet jetzt `opentelemetry-distro`.
-    - `Dockerfile` führt `opentelemetry-bootstrap -a install` aus und startet die App mit `opentelemetry-instrument`.
-    - Manueller OTel-Code wurde aus `app.py` entfernt.
-    - `docker-compose.yml` um spezifische `OTEL_*_EXPORTER`-Variablen ergänzt.
-- **Diverse Services:** Korrekturen und Vervollständigung der OTel-Instrumentierung (Java, DotNet, Go (nur Traces)).
-- **Docker Compose:** Prometheus Image-Tag korrigiert.
+- **Kubernetes-Deployment:** Erfolgreiche Bereitstellung aller Services und der Observability-Komponenten (Collector, Prometheus, Tempo, Loki, Grafana, Nginx-Gateway) mithilfe von Helm-Charts in einem lokalen Kubernetes-Cluster.
+- **Bugfixes (Kubernetes):**
+    - Korrektur des Nginx-Routings für die Todo-API (Problem mit abschließendem Slash).
+    - Korrektur der Service-Erreichbarkeit (.NET Statistik konnte Java Todo nicht finden) durch Hinzufügen eines K8s-Service-Alias.
+    - Korrekte Konfiguration von CORS im Nginx-Gateway für API- und OTel-Collector-Endpunkte.
+- **Frontend OTel:** OpenTelemetry-Tracing wurde erfolgreich in das Angular-Frontend integriert.
+- **Python OTel:** Umstellung auf Agent-basierten Ansatz zur Lösung von Modul-Problemen.
 
-## Nächste Schritte Konkret
+## Nächste Schritte (Priorisiert)
 
-1.  **Kubernetes-Manifeste:** Beginnen mit der Erstellung von grundlegenden Manifesten (Deployment, Service) für einen der Anwendungsdienste (z.B. `service-java-todo`) und den OTel-Collector.
-2.  **Konfiguration (ConfigMap):** Erstellen einer ConfigMap für den OTel-Collector in Kubernetes.
-3.  **Lokales K8s-Deployment:** Testen des Deployments dieser ersten Komponenten in einer lokalen K8s-Umgebung.
+1.  **Grafana Dashboards:** Erstellen/Anpassen von Basis-Dashboards für die Überwachung der Services in Kubernetes (Metriken, Traces, Logs).
+2.  **Kubernetes Ressourcen:** Definieren und Implementieren von Ressourcen-Requests und -Limits in den Helm-Charts für alle Deployments.
+3.  **Dokumentation:** Aktualisieren der README-Dateien für die Services und das Kubernetes-Deployment. Memory Bank ist aktuell.
+4.  **Kubernetes Health Checks:** Implementieren von Liveness- und Readiness-Probes in den Helm-Charts.
 
 ## Offene Fragen / Entscheidungen
 
-- Soll das Go-Logging vor dem K8s-Deployment noch einmal versucht werden oder verschieben wir das?
-- Welche K8s-Distribution wird primär verwendet (minikube, k3d, Docker Desktop K8s)? (Beeinflusst Ingress etc.)
+- Welche K8s-Distribution wird primär für Tests/Demos verwendet (minikube, k3d, Docker Desktop K8s)? (Beeinflusst leicht Ingress/Gateway-Exposition).
+- Umfang der Grafana-Dashboards für den MVP.
 
-## Aktuelle Änderungen
+## Bekannte Probleme / Herausforderungen
 
-- **04.04.2025:** Korrektur des Nginx-Routing für den Todo-API-Endpunkt
-  - Problem: Die Todo-API lieferte 404-Fehler für Anfragen an `/api/todos/`
-  - Ursache: Der Java Spring Boot Service erwartet Pfade ohne abschließende Slashes (`/todos` statt `/todos/`)
-  - Lösung: Entfernung des abschließenden Slashes im proxy_pass in der Nginx-Konfiguration
-  - Aktualisierung der Helm Charts, um diese Konfiguration bei jeder Bereitstellung anzuwenden
-
-- **04.04.2025:** CORS-Unterstützung für OpenTelemetry-Endpunkte hinzugefügt
-  - OpenTelemetry-Collector-Endpunkte wurden über das Nginx-Gateway mit korrekten CORS-Headern verfügbar gemacht
-  - Preflight-Anfragen (OPTIONS) werden nun korrekt mit Status 204 beantwortet
-  - Ermöglicht Frontend-Tracing-Integration mit dem Collector
-
-- **04.04.2025:** Service-Alias für den Java-Todo-Service erstellt
-  - Problem: Der Statistik-Service konnte den Todo-Service nicht unter dem erwarteten Namen `service-java-todo` erreichen
-  - Lösung: Ein Kubernetes-Service-Alias wurde erstellt, der auf den eigentlichen Todo-Service umleitet
-
-## Offene Entscheidungen
-
-- **Kubernetes Ressourcen-Limits:** Optimale Einstellungen für Ressourcen-Requests und Limits müssen noch definiert werden
-- **Dashboard-Erstellung:** Entscheidung über den Umfang der Grafana-Dashboards für Day-2-Operations
+- Siehe `progress.md` (Grafana "No Data", Python Cold Start, Go Logging).
 
 ## Nächste Schritte
 

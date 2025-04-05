@@ -28,4 +28,8 @@ Es ist **kein manueller** OpenTelemetry-Initialisierungscode in `app.py` mehr no
 
 ## Starten (innerhalb von Docker Compose)
 
-Der Service wird automatisch als Teil des `docker-compose up` Befehls im Hauptverzeichnis gestartet. 
+Der Service wird automatisch als Teil des `docker-compose up` Befehls im Hauptverzeichnis gestartet.
+
+## Starten (in Kubernetes via Helm)
+
+Der Service wird zusammen mit den anderen Services über Helm bereitgestellt (siehe `kubernetes/README.md`). Die Konfiguration der OTel-Umgebungsvariablen erfolgt ebenfalls über die Helm-Charts. 

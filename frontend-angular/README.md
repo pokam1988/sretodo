@@ -75,6 +75,10 @@ Dieses Verzeichnis enthält die Angular-Frontend-Anwendung für die SRE ToDo Dem
 
 Das Frontend wird als Teil des gesamten Stacks mit `docker-compose up` gebaut und gestartet. Es ist über das Nginx-Gateway auf `http://localhost/` erreichbar.
 
+## Starten (in Kubernetes via Helm)
+
+Das Frontend wird zusammen mit den anderen Services über Helm bereitgestellt (siehe `kubernetes/README.md`). Der Zugriff erfolgt ebenfalls über das Nginx Gateway, dessen Adresse vom Ingress-Controller abhängt (z.B. `http://localhost/` bei lokalem K8s).
+
 ## Entwicklung
 
 -   `cd frontend-angular`
