@@ -63,7 +63,7 @@ spec:
         - name: nginx-run
           emptyDir: {}
         - name: nginx-tmp
-          emptyDir: {} 
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -80,12 +80,12 @@ data:
     # wir verwenden direkt die Service-Namen.
 
     server {
-        listen 8080;
+        listen 80;
         server_name _;
 
         # Logging (optional)
-        # access_log /var/log/nginx/host.access.log;
-        # error_log /var/log/nginx/host.error.log warn;
+        access_log /var/log/nginx/host.access.log;
+        error_log /var/log/nginx/host.error.log warn;
 
         # API Endpunkte weiterleiten
         # Wir verwenden die internen K8s Service DNS-Namen
