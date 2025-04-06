@@ -80,12 +80,12 @@ data:
     # wir verwenden direkt die Service-Namen.
 
     server {
-        listen 80;
+       listen 8080;
         server_name _;
 
         # Logging (optional)
-        access_log /var/log/nginx/host.access.log;
-        error_log /var/log/nginx/host.error.log warn;
+        access_log /dev/stdout;
+        error_log /dev/stderr warn;
 
         # API Endpunkte weiterleiten
         # Wir verwenden die internen K8s Service DNS-Namen
