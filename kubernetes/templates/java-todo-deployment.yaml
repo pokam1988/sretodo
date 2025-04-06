@@ -18,13 +18,17 @@ spec:
         {{- include "sretodo.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: java-todo
     spec:
+      # Reference the global image pull secret
+      imagePullSecrets:
+        - name: {{ .Values.global.image.pullSecret }}
       # OpenShift compatible security context
       securityContext:
         fsGroup: 1006530000
       containers:
         - name: java-todo
-          image: "ghcr.io/mistral-valaise/sretodo-java-todo:afa966b"
-          imagePullPolicy: IfNotPresent
+          # Construct image path using global prefix, service name, and service-specific tag
+          image: "{{ .Values.global.repositoryPrefix }}/{{ .Values.javaTodo.imageName }}:{{ .Values.javaTodo.tag }}"
+          imagePullPolicy: {{ .Values.global.image.pullPolicy }}
           securityContext:
             runAsNonRoot: true
             runAsUser: 1006530000

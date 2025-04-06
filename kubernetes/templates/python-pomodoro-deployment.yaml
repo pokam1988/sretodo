@@ -18,13 +18,17 @@ spec:
         {{- include "sretodo.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: python-pomodoro
     spec:
+      # Reference the global image pull secret
+      imagePullSecrets:
+        - name: {{ .Values.global.image.pullSecret }}
       # OpenShift compatible security context
       securityContext:
         fsGroup: 1006530000
       containers:
         - name: python-pomodoro
-          image: "ghcr.io/mistral-valaise/sretodo-python-pomodoro:5f5c04a"
-          imagePullPolicy: {{ .Values.pythonPomodoro.pullPolicy }}
+          # Construct image path using global prefix, service name, and service-specific tag
+          image: "{{ .Values.global.repositoryPrefix }}/{{ .Values.pythonPomodoro.imageName }}:{{ .Values.pythonPomodoro.tag }}"
+          imagePullPolicy: {{ .Values.global.image.pullPolicy }}
           securityContext:
             runAsNonRoot: true
             runAsUser: 1006530000
