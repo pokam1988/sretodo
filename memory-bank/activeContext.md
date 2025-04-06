@@ -2,7 +2,7 @@
 
 ## Aktueller Fokus
 
-Der Fokus liegt auf der Stabilisierung und Verbesserung des OpenShift-Deployments. Insbesondere soll das Problem mit dem Frontend behoben werden, das aktuell eine statische HTML-Seite anstelle der Angular-Anwendung anzeigt. Weitere Aspekte sind die Erstellung funktionierender Grafana-Dashboards und die Optimierung von Ressourcenlimits für die Services. Die grundlegende Bereitstellung via Helm auf OpenShift funktioniert.
+Der Fokus liegt auf der Stabilisierung und Verfeinerung des OpenShift-Deployments via Helm. Nachdem die Probleme mit Image Pulls und der Erreichbarkeit des Frontends behoben wurden, sind die nächsten Schritte die Untersuchung der Grafana Dashboards und die Optimierung der Ressourcenkonfiguration.
 
 ## 2. Recent Activities
 
@@ -33,34 +33,36 @@ Der Fokus liegt auf der Stabilisierung und Verbesserung des OpenShift-Deployment
 16. ~~**Update Memory Bank & Commit (Statistik):**~~ **(Done)**
 17. ~~**Update Memory Bank & Commit (Healthcheck):**~~ **(Done)**
 18. ~~**Update Memory Bank & Commit (Gateway & Frontend):**~~ **(Done)**
-19. ~~**Define & Implement Next Feature/Refinement:** (z.B. Grafana Dashboards, ToDo Edit, UI Routing, Kubernetes Prep...)~~ **(Done - Grafana Dashboards erstellt, cAdvisor hinzugefügt)**
-20. ~~**Dokumentieren & Committen:** Aktuellen Stand (Dashboards, cAdvisor, bekannte Probleme) dokumentieren und committen.~~ **(Done)**
-21. ~~**Fehlerbehebung / Nächster Schritt:** Fehler in Grafana Dashboards beheben oder nächstes Feature auswählen.~~ **(Nächstes Feature ausgewählt: ToDo Edit + Refactoring)**
-22. ~~**Implementieren & Testen:** ToDo Edit-Funktion im Frontend implementieren und API-Service refaktorieren.~~ **(Done)**
-23. ~~**Dokumentieren & Committen:** Aktuellen Stand (ToDo Edit, Refactoring) dokumentieren und committen.~~ **(Done)**
-24. ~~**Nächster Schritt auswählen:** (z.B. Frontend Routing, Frontend OTel, Backend Logic, Kubernetes Prep, Dashboard Fix...)~~ **(Frontend Routing ausgewählt)**
-25. ~~**Implementieren & Testen:** Angular Routing im Frontend implementieren.~~ **(Done)**
-26. ~~**Dokumentieren & Committen:** Aktuellen Stand (Frontend Routing, Style Fixes) dokumentieren und committen.~~ **(Done)**
-27. ~~**Nächster Schritt auswählen:** (z.B. Frontend OTel, Backend Logic, Kubernetes Prep, Dashboard Fix...)~~ **(Frontend OTel ausgewählt)**
-28. ~~**Implementieren & Testen:** OpenTelemetry im Frontend hinzufügen.~~ **(Done)**
-29. ~~**Dokumentieren & Committen:** Aktuellen Stand (Frontend OTel) dokumentieren und committen.~~ **(Done)**
+19. ~~**Define & Implement Next Feature/Refinement:**~~ **(Done - Grafana Dashboards erstellt, cAdvisor hinzugefügt)**
+20. ~~**Dokumentieren & Committen:**~~ **(Done)**
+21. ~~**Fehlerbehebung / Nächster Schritt:**~~ **(Nächstes Feature ausgewählt: ToDo Edit + Refactoring)**
+22. ~~**Implementieren & Testen:** ToDo Edit + Refactoring~~ **(Done)**
+23. ~~**Dokumentieren & Committen:**~~ **(Done)**
+24. ~~**Nächster Schritt auswählen:**~~ **(Frontend Routing ausgewählt)**
+25. ~~**Implementieren & Testen:** Angular Routing~~ **(Done)**
+26. ~~**Dokumentieren & Committen:**~~ **(Done)**
+27. ~~**Nächster Schritt auswählen:**~~ **(Frontend OTel ausgewählt)**
+28. ~~**Implementieren & Testen:** OpenTelemetry im Frontend~~ **(Done)**
+29. ~~**Dokumentieren & Committen:**~~ **(Done)**
 30. ~~**Nächster Schritt auswählen:**~~ **(OpenShift-Kompatibilität ausgewählt)**
 31. ~~**Helm-Charts für Kubernetes/OpenShift erstellen**~~ **(Done)**
 32. ~~**OpenShift-Kompatibilität implementieren**~~ **(Done)**
 33. ~~**GitHub Actions Workflow erstellen**~~ **(Done)**
 34. ~~**GitHub Actions Workflow verbessern (deploy-only Option)**~~ **(Done)**
-35. **Frontend-Fix für OpenShift implementieren** **<- YOU ARE HERE**
-36. **Dokumentieren & Committen:** Aktuellen Stand dokumentieren und committen.
+35. ~~**OpenShift Deployment Troubleshooting (Image Pull, Gateway Timeout, Service Routing)**~~ **(Done)**
+36. **Dokumentieren & Committen:** Aktuellen Stand dokumentieren und committen. **<- YOU ARE HERE**
+37. **Grafana Dashboards:** Untersuchen und korrigieren, warum Dashboards keine Daten anzeigen.
+38. **Ressourcen-Optimierung:** Limits/Requests für Kubernetes-Deployments überprüfen und anpassen.
+39. **Dokumentation vervollständigen:** READMEs für Services und Helm-Chart aktualisieren.
 
 ## 4. Open Questions / Decisions
 
--   Genaues Datenformat für die Statistik-Aggregation definieren (aktuell nur ToDo-Anzahl).
--   Priorisierung der nächsten Schritte (siehe Abschnitt 5 in `progress.md`).
+-   Optimale Werte für Ressourcenlimits und -requests in OpenShift.
+-   Spezifische Abfragen/Metriken für funktionierende Grafana-Dashboards.
 
 ## 5. Blockers
 
--   Grafana Dashboards zeigen "No Data".
--   Frontend in OpenShift zeigt statische HTML-Seite statt Angular-App.
+-   Grafana Dashboards zeigen "No Data". (Zu untersuchen)
 
 ## Current Work Focus
 
@@ -69,19 +71,14 @@ Der Fokus liegt auf der Stabilisierung und Verbesserung des OpenShift-Deployment
 
 ## Recent Changes
 
-- **OpenShift Compatibility:** Anpassung der Kubernetes-Manifeste für OpenShift-Kompatibilität:
-  - Änderung der Container-Ports von 80 auf 8080 für Frontend und NGINX
-  - Implementierung von Security Contexts für Non-Root-Benutzer in allen Deployments
-  - Anpassung des Service-Mappings für Port 80 auf targetPort 8080
-  - Optimierung der Ressourcenlimits und -requests für alle Komponenten
-
-- **GitHub Actions Workflow:** Verbesserung des Workflows für CI/CD:
-  - Hinzufügen einer "deploy-only"-Option, um Deployments ohne Neubau der Images durchzuführen
-  - Implementierung konditionaler Builds basierend auf Dateiänderungen
-  - Konfiguration für OpenShift-Login und Helm-Deployment
-  - Implementierung einer Destroy-Funktion zur Entfernung des Helm-Releases
-
-- **Frontend-Issue:** Identifizierung des Problems, dass das Frontend in OpenShift eine statische HTML-Seite anzeigt, die durch eine ConfigMap bereitgestellt wird, anstatt die Angular-Anwendung aus dem Container-Image zu laden.
+- **Helm Chart Refactoring:** Die `values.yaml` wurde überarbeitet, um globale Einstellungen für Image-Repository, Pull Policy und Pull Secret zu verwenden. Die Deployment-Templates wurden angepasst, um diese globalen Werte sowie service-spezifische Image-Tags korrekt zu referenzieren.
+- **Image Pull Secrets:** Konfiguration im Helm-Chart implementiert, um ein definiertes Secret (`ghcr-secret`) zum Pullen von Images aus privaten Registries (GHCR) zu verwenden.
+- **.NET Service Fix:** Korrektur der Umgebungsvariablen (`TODO_SERVICE_HOST`, `TODO_SERVICE_PORT`) im Deployment, damit der Statistik-Service den Java-Service finden kann.
+- **Nginx Gateway Fixes:** 
+    - Korrektur des `proxy_pass`-Pfades für den Java-Service (Entfernen des trailing slash).
+    - Korrektur des Frontend-Service-Ports in der Gateway-Konfiguration (von 80 auf 8080).
+- **Frontend Service Fix:** Korrektur des Service-Ports in der Frontend-Service-Definition von 80 auf 8080, um mit dem Gateway und dem Pod übereinzustimmen.
+- **Troubleshooting (OpenShift):** Mehrere Runden der Fehlersuche und Korrektur von YAML-Syntaxfehlern und Konfigurationsproblemen im Helm-Chart, die zu ImagePullBackOff und Gateway Timeouts führten.
 
 ## Next Steps
 

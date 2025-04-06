@@ -2,8 +2,8 @@
 
 ## 1. Current Status
 
--   **Overall:** Alle Services inkl. Nginx Gateway laufen via Docker Compose. Basislogik für ToDo, Pomodoro, Statistik, Healthcheck implementiert. Frontend zeigt Daten an, erlaubt Hinzufügen/Löschen/Status ändern von ToDos und Pomodoro-Steuerung. Observability-Stack läuft, Korrelation konfiguriert.
--   **Focus:** Abschluss MVP, Verfeinerungen, OpenShift-Compatibility.
+-   **Overall:** Alle Services (Frontend, Java, .NET, Python, Gateway, Observability-Stack) laufen via Helm auf OpenShift. Kommunikation zwischen Frontend und Backends funktioniert. Image Pulls aus privater Registry (GHCR) funktionieren mittels Image Pull Secret.
+-   **Focus:** Stabilisierung und Verfeinerung des OpenShift-Deployments, insbesondere Grafana Dashboards und Ressourcenoptimierung.
 -   **Date:** $(date +%Y-%m-%d)
 
 ## 2. What Works
@@ -32,30 +32,38 @@
 -   **CORS:** Probleme durch zentrale Behandlung im Nginx Gateway gelöst, Konfiguration aus Backends entfernt.
 -   **OpenShift Compatibility:** Kubernetes-Helm-Chart für OpenShift angepasst mit Non-Root-Security-Contexts und korrekten Port-Mappings.
 -   **GitHub Actions Workflow:** Workflow für Build, Push und Deployment auf OpenShift erstellt und um "deploy-only"-Option erweitert.
+-   **Helm Deployment:** Erfolgreiche Bereitstellung aller Komponenten via Helm auf OpenShift.
+-   **Image Pulls (Privat):** Erfolgreiches Pullen der Anwendungs-Images aus `ghcr.io` mittels konfiguriertem `imagePullSecrets`.
+-   **Service Routing (K8s):** Korrekte Konfiguration des Nginx Gateways und der internen Services für die Kommunikation innerhalb des Clusters (einschließlich Port-Mappings und Service-Namen).
+-   **Frontend-Zugriff:** Das Angular-Frontend ist über die OpenShift-Route des Nginx-Gateways erreichbar und funktioniert.
+-   **Backend-Kommunikation:** Frontend kann Daten von den Backend-Services (ToDo, Statistik) über den Gateway abrufen.
 
 ## 3. What's Left to Build (High-Level MVP Goals)
 
 1.  ~~**Dockerfiles:** Create Dockerfiles for all services.~~
 2.  ~~**Docker Compose Build/Up:** Verify that all service images can be built and containers start.~~
 3.  ~~**OpenTelemetry Integration:** Configure and verify telemetry data flow from all services to the Collector and backends, including Trace-Log correlation.~~
-4.  ~~**Basic Service Logic:** Implement core functionality (ToDo CRUD, Pomodoro Timers, Statistik Aggregation (ToDo Count), Health Checks, Frontend Display).~~ (Basislogik ist drin, Frontend zeigt an)
-5.  **Grafana Dashboards:** ~~Create basic dashboards for visualizing data.~~ (Erstellt: Service-, Log-, Ressourcen-Übersicht via Provisioning) **<- Teilweise Erledigt**
+4.  ~~**Basic Service Logic:** Implement core functionality (ToDo CRUD, Pomodoro Timers, Statistik Aggregation (ToDo Count), Health Checks, Frontend Display).~~
+5.  **Grafana Dashboards:** ~~Create basic dashboards for visualizing data.~~ (Erstellt, aber zeigen "No Data") **<- In Arbeit/Zu korrigieren**
 6.  **Fehlerbehebung Grafana Dashboards:** Untersuchen, warum provisionierte Dashboards "No Data" anzeigen.
 7.  ~~**OpenShift Compatibility:** Update Kubernetes manifests for OpenShift compatibility and ensure proper deployment on OpenShift.~~
 8.  **Frontend-Fix:** Frontend-Deployment verwendet aktuell statisches HTML über ConfigMap statt Angular-App. Fix: ConfigMap entfernen und Angular-Image verwenden.
+9.  **Ressourcen-Optimierung:** Überprüfung und Anpassung der Limits/Requests.
 
 ## 4. Known Issues / Challenges
 
 -   **[Behoben]** Build-Fehler.
 -   **[Behoben]** `tempo`-Container Startfehler.
--   **[Behoben]** Loki-Label-Problem (Workaround mit altem Exporter).
+-   **[Behoben]** Loki-Label-Problem.
 -   **[Behoben]** Grafana React-Fehler.
--   **[Behoben]** Python/Uvicorn Routen-Update-Problem (Workaround: Stack-Neustart).
--   **[Behoben]** .NET-Startprobleme (Workaround: Längere Wartezeit).
--   **[Behoben]** CORS-Probleme (Gelöst durch Nginx Gateway).
--   **[Behoben]** Nginx Gateway Start/Konfigurationsprobleme (Volume Mounts, Konfig-Fehler).
--   **[Neu]** Grafana Dashboards (Service Overview, Log Overview, Resource Usage) zeigen "No Data". Ursache (Query, Datenfluss?) unklar.
--   **[Neu]** Frontend in OpenShift zeigt statische HTML-Seite statt Angular-App (Verursacht durch ConfigMap-Mount).
+-   **[Behoben]** Python/Uvicorn Routen-Update-Problem.
+-   **[Behoben]** .NET-Startprobleme.
+-   **[Behoben]** CORS-Probleme.
+-   **[Behoben]** Nginx Gateway Start/Konfigurationsprobleme.
+-   **[Behoben]** OpenShift Image Pull Errors (`ImagePullBackOff`, `manifest unknown`).
+-   **[Behoben]** OpenShift Gateway Timeout (`504`) beim Zugriff auf Frontend.
+-   **[Behoben]** OpenShift 404 Fehler beim Zugriff auf Backend-APIs via Gateway.
+-   **[Neu/Offen]** Grafana Dashboards (Service Overview, Log Overview, Resource Usage) zeigen "No Data". Ursache (Query, Datenfluss?) unklar.
 
 ## 5. Potential Next Steps / Refinements
 
@@ -67,6 +75,8 @@
 -   ~~Prepare for Kubernetes deployment.~~ **(Done)**
 -   ~~Make the application OpenShift compatible.~~ **(Done)**
 -   ~~Enhance GitHub Actions workflow for CI/CD.~~ **(Done)**
+-   Verbessern der Helm-Chart-Struktur (z.B. Abhängigkeiten, Tests).
+-   Automatisches Tagging von `:latest` im CI/CD-Workflow (optional).
 
 ## Projektstatus und Fortschritt
 
@@ -183,12 +193,13 @@
 - Gelegentliche Verzögerungen bei der ersten Anfrage an den Python Pomodoro Service (Cold Start).
 - Go Service Logging: OTel Logging für Go ist aufgrund von Modul-Inkompatibilitäten noch nicht implementiert (depriorisiert).
 
-## Nächste Prioritäten
+## Nächste Prioritäten (Aktualisiert)
 
-1. Frontend-Fix in OpenShift (Entfernen der Frontend-ConfigMap und Verwendung des Angular-Images)
-2. Erstellen/Anpassen einer Basisversion der Grafana-Dashboards für Monitoring
-3. Ressourcenlimits/-requests für alle Kubernetes-Deployments optimieren
-4. Dokumentation für den gesamten Technologie-Stack und Deployment-Prozess fertigstellen (READMEs, Memory Bank)
+1.  **Grafana Dashboards:** Untersuchen und korrigieren, warum die bereitgestellten Dashboards "No Data" anzeigen. Sicherstellen, dass Metriken und Logs korrekt abgefragt werden.
+2.  **Ressourcenlimits/-requests optimieren:** Analyse des Ressourcenverbrauchs der Pods in OpenShift und Anpassung der Werte in `values.yaml` für Stabilität und Effizienz.
+3.  **Dokumentation vervollständigen:** Aktualisieren der README-Dateien für die einzelnen Services und das Helm-Chart (`kubernetes/README.md`) mit den neuesten Konfigurationen und Deployment-Schritten.
+4.  **(Optional):** Implementierung von Health Checks für alle Komponenten im Helm Chart (Liveness/Readiness Probes überprüfen/ergänzen).
+5.  **(Optional):** Go Service Logging implementieren.
 
 ## OpenShift Compatibility Updates
 
