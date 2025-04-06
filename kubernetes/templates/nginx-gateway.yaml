@@ -92,7 +92,7 @@ data:
 
         # 1. Alle Todo-Anfragen mit korrektem Pfad
         location /api/todos/ {
-            proxy_pass http://{{ include "sretodo.fullname" . }}-java-todo:{{ .Values.javaTodo.service.port }}/todos;
+            proxy_pass http://{{ include "sretodo.fullname" . }}-java-todo:{{ .Values.javaTodo.service.port }}/api/todos/;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -112,7 +112,7 @@ data:
 
         # Fallback für Todo ohne Slash am Ende (für POST requests)
         location = /api/todos {
-            proxy_pass http://{{ include "sretodo.fullname" . }}-java-todo:{{ .Values.javaTodo.service.port }}/todos;
+            proxy_pass http://{{ include "sretodo.fullname" . }}-java-todo:{{ .Values.javaTodo.service.port }}/api/todos;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -132,7 +132,7 @@ data:
 
         # Spezifische Todos mit ID (für PUT/GET/DELETE Anfragen an /api/todos/{id})
         location ~ ^/api/todos/([0-9]+)$ {
-            proxy_pass http://{{ include "sretodo.fullname" . }}-java-todo:{{ .Values.javaTodo.service.port }}/todos/$1;
+            proxy_pass http://{{ include "sretodo.fullname" . }}-java-todo:{{ .Values.javaTodo.service.port }}/api/todos/$1;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

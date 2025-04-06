@@ -5,7 +5,7 @@ frontend:
   enabled: true
   replicas: 1
   image: ghcr.io/mistral-valaise/sretodo-frontend
-  tag: latest
+  tag: b507751
   pullPolicy: Always
   service:
     type: ClusterIP
@@ -63,7 +63,7 @@ pythonPomodoro:
   pullPolicy: IfNotPresent
   service:
     type: ClusterIP
-    port: 5000
+    port: 8002
   resources:
     limits:
       cpu: 200m
