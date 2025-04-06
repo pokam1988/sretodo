@@ -23,7 +23,7 @@ spec:
         fsGroup: 1006530000
       containers:
         - name: dotnet-statistik
-          image: "docker pull ghcr.io/mistral-valaise/sretodo-dotnet-statistik:5f5c04a"
+          image: "ghcr.io/mistral-valaise/sretodo-dotnet-statistik:5f5c04a"
           imagePullPolicy: {{ .Values.dotnetStatistik.pullPolicy }}
           env:
             - name: ASPNETCORE_URLS
@@ -50,8 +50,10 @@ spec:
             initialDelaySeconds: 15
             periodSeconds: 10
           env:
-            - name: TodoServiceUrl
-              value: http://{{ .Release.Name }}-java-todo:8080
+            - name: TODO_SERVICE_HOST
+              value: {{ include "sretodo.fullname" . }}-java-todo
+            - name: TODO_SERVICE_PORT
+              value: "{{ .Values.javaTodo.service.port | default 8080 }}"
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: http://{{ .Release.Name }}-otel-collector:4317
           resources:
