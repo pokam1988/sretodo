@@ -33,6 +33,13 @@ spec:
               containerPort: 8080
               protocol: TCP
           # Health checks
+          resources:
+            limits:
+              cpu: '1'
+              memory: 1Gi
+            requests:
+              cpu: 100m
+              memory: 128Mi
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
@@ -53,7 +60,7 @@ spec:
             - name: SPRING_DATASOURCE_PASSWORD
               value: postgres
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: http://{{ .Release.Name }}-otel-collector:4317
+              value: http://{{ .Release.Name }}-otel-collector:4318
           resources:
             {{- toYaml .Values.javaTodo.resources | nindent 12 }}
 ---

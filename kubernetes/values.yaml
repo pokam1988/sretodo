@@ -30,8 +30,8 @@ javaTodo:
     port: 8080
   resources:
     limits:
-      cpu: 200m
-      memory: 256Mi
+      cpu: 1000m
+      memory: 756Mi
     requests:
       cpu: 100m
       memory: 128Mi
