@@ -1,30 +1,35 @@
-# Service Python Pomodoro (FastAPI)
+# Service: Python Pomodoro (FastAPI)
 
-## Beschreibung
+Dieser Service implementiert eine einfache Pomodoro-Timer-API mit FastAPI.
 
-Dieser Service verwaltet Pomodoro-Timer über eine REST API, implementiert mit FastAPI.
-Er verwendet eine einfache In-Memory-Datenstruktur zur Speicherung der Timer-Zustände im MVP.
+## Endpunkte
 
-## API Endpunkte
+- `GET /health`: Gibt den Status des Services zurück.
+- `POST /timers/{user_id}/start`: Startet einen Timer für einen Benutzer.
+- `POST /timers/{user_id}/stop`: Stoppt einen Timer für einen Benutzer.
+- `GET /timers/{user_id}`: Gibt den Status eines Timers zurück.
 
--   **`GET /health`**: Gibt den Service-Status zurück (`{"status": "UP"}`).
--   **`POST /timers/{user_id}/start`**: Startet einen neuen Timer für den angegebenen `user_id`.
-    -   **Request Body (JSON):** `{ "duration_minutes": <int>, "timer_type": "<string>" }` (optional, Defaults: 25 Min, "work")
-    -   **Response Body:** Aktueller Timer-Zustand.
-    -   **Status Codes:** `200 OK`, `409 Conflict` (falls Timer bereits läuft).
--   **`POST /timers/{user_id}/stop`**: Stoppt den aktuell laufenden Timer für den `user_id`.
-    -   **Response Body:** Aktueller Timer-Zustand.
-    -   **Status Codes:** `200 OK`, `404 Not Found` (falls kein laufender Timer gefunden).
--   **`GET /timers/{user_id}`**: Ruft den aktuellen Status des Timers für den `user_id` ab.
-    -   **Response Body:** Aktueller Timer-Zustand.
-    -   **Status Codes:** `200 OK`, `404 Not Found`.
+## Technologie
 
-## Entwicklungsschritte
+- Python 3.12
+- FastAPI
+- Uvicorn
 
-*(Hier werden die Implementierungsschritte dokumentiert)*
+## Observability
 
-1.  Initiales Projekt-Setup mit `requirements.txt`.
-2.  Dockerfile erstellt.
-3.  Basis-FastAPI-App mit `/health`-Endpunkt implementiert.
-4.  Pomodoro-Endpunkte (`/start`, `/stop`, `/status`) mit In-Memory-Speicherung hinzugefügt.
-5.  `pydantic` zu `requirements.txt` hinzugefügt. 
+Die Instrumentierung für OpenTelemetry (Traces, Logs, Metriken) erfolgt **automatisch** über den `opentelemetry-instrument` Agenten.
+
+- **Abhängigkeiten:** `opentelemetry-distro` und `opentelemetry-exporter-otlp` sind in `requirements.txt` definiert.
+- **Installation der Instrumentierung:** Der `opentelemetry-bootstrap -a install` Befehl im `Dockerfile` installiert automatisch die notwendigen Instrumentierungsbibliotheken (z.B. für FastAPI, Logging).
+- **Start:** Der Container wird über `CMD ["opentelemetry-instrument", "uvicorn", ...]` im `Dockerfile` gestartet.
+- **Konfiguration:** Der Agent wird über Umgebungsvariablen in `docker-compose.yml` konfiguriert (z.B. `OTEL_SERVICE_NAME`, `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_TRACES_EXPORTER`, `OTEL_METRICS_EXPORTER`, `OTEL_LOGS_EXPORTER`, `OTEL_EXPORTER_OTLP_PROTOCOL`).
+
+Es ist **kein manueller** OpenTelemetry-Initialisierungscode in `app.py` mehr notwendig.
+
+## Starten (innerhalb von Docker Compose)
+
+Der Service wird automatisch als Teil des `docker-compose up` Befehls im Hauptverzeichnis gestartet.
+
+## Starten (in Kubernetes via Helm)
+
+Der Service wird zusammen mit den anderen Services über Helm bereitgestellt (siehe `kubernetes/README.md`). Die Konfiguration der OTel-Umgebungsvariablen erfolgt ebenfalls über die Helm-Charts. 

@@ -1,0 +1,19 @@
+{{- if .Values.serviceGoHealthcheck.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "sretodo-chart.fullname" . }}-go-healthcheck
+  labels:
+    {{- include "sretodo-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: go-healthcheck
+spec:
+  type: {{ .Values.serviceGoHealthcheck.service.type }}
+  ports:
+    - port: {{ .Values.serviceGoHealthcheck.service.port }}
+      targetPort: http # Name des Ports im Deployment
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "sretodo-chart.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: go-healthcheck
+{{- end }} 

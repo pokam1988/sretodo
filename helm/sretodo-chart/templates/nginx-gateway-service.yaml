@@ -1,0 +1,21 @@
+{{- if .Values.nginxGateway.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "sretodo-chart.fullname" . }}-nginx-gateway
+  labels:
+    {{- include "sretodo-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nginx-gateway
+spec:
+  type: {{ .Values.nginxGateway.service.type }}
+  ports:
+    - port: {{ .Values.nginxGateway.service.port }}
+      targetPort: http # Name des Ports im Deployment
+      protocol: TCP
+      name: http
+      # Wenn type NodePort ist, kann hier ein nodePort definiert werden:
+      # nodePort: 30080
+  selector:
+    {{- include "sretodo-chart.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: nginx-gateway
+{{- end }} 

@@ -1,0 +1,327 @@
+name: Deploy SRE ToDo Demo to OpenShift
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - feature-250404-start
+    paths:
+      - "frontend-angular/**"
+      - "service-java-todo/**"
+      - "service-dotnet-statistik/**"
+      - "service-python-pomodoro/**"
+      - "kubernetes/**"
+      - ".github/workflows/deploy.yaml"
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Action to perform"
+        required: true
+        default: "deploy"
+        type: choice
+        options:
+          - deploy
+          - deploy-only
+          - destroy
+      release_name:
+        description: "Helm release name"
+        required: false
+        default: "sretodo-release"
+      existing_tag:
+        description: "Existing image tag to use (only for deploy-only)"
+        required: false
+        default: "latest"
+
+jobs:
+  build-and-push:
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'deploy')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # Erforderlich für Push zu ghcr.io
+
+    outputs:
+      image_tag: ${{ steps.meta-common.outputs.version }} # Git SHA als Tag
+      image_repo_frontend: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-frontend
+      image_repo_java: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-service-java-todo
+      image_repo_dotnet: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-service-dotnet-statistik
+      image_repo_python: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-service-python-pomodoro
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set repository owner lowercase
+        id: lowercase
+        run: |
+          echo "repository_owner_lowercase=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            image=moby/buildkit:latest
+            network=host
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata (common)
+        id: meta-common
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-frontend
+            ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-service-java-todo
+            ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-service-dotnet-statistik
+            ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-service-python-pomodoro
+          tags: |
+            type=sha,prefix=
+
+      - name: Check for frontend changes
+        id: check_frontend
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            frontend:
+              - 'frontend-angular/**'
+
+      - name: Check for java-todo changes
+        id: check_java
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            java:
+              - 'service-java-todo/**'
+
+      - name: Check for dotnet-statistik changes
+        id: check_dotnet
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            dotnet:
+              - 'service-dotnet-statistik/**'
+
+      - name: Check for python-pomodoro changes
+        id: check_python
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            python:
+              - 'service-python-pomodoro/**'
+
+      - name: Build and push Frontend image
+        uses: docker/build-push-action@v5
+        if: ${{ steps.check_frontend.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch' }}
+        with:
+          context: ./frontend-angular
+          push: true
+          labels: ${{ steps.meta-common.outputs.labels }}
+          file: ./frontend-angular/Dockerfile
+          tags: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-frontend:${{ steps.meta-common.outputs.version }}
+
+      - name: Build and push Java Todo image
+        uses: docker/build-push-action@v5
+        if: ${{ steps.check_java.outputs.java == 'true' || github.event_name == 'workflow_dispatch' }}
+        with:
+          context: ./service-java-todo
+          push: true
+          tags: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-service-java-todo:${{ steps.meta-common.outputs.version }}
+          labels: ${{ steps.meta-common.outputs.labels }}
+          file: ./service-java-todo/Dockerfile
+
+      - name: Build and push .NET Statistik image
+        uses: docker/build-push-action@v5
+        if: ${{ steps.check_dotnet.outputs.dotnet == 'true' || github.event_name == 'workflow_dispatch' }}
+        with:
+          context: ./service-dotnet-statistik
+          push: true
+          tags: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-service-dotnet-statistik:${{ steps.meta-common.outputs.version }}
+          labels: ${{ steps.meta-common.outputs.labels }}
+          file: ./service-dotnet-statistik/Dockerfile
+
+      - name: Build and push Python Pomodoro image
+        uses: docker/build-push-action@v5
+        if: ${{ steps.check_python.outputs.python == 'true' || github.event_name == 'workflow_dispatch' }}
+        with:
+          context: ./service-python-pomodoro
+          push: true
+          tags: ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-service-python-pomodoro:${{ steps.meta-common.outputs.version }}
+          labels: ${{ steps.meta-common.outputs.labels }}
+          file: ./service-python-pomodoro/Dockerfile
+
+  # Deploy after build
+  deploy-after-build:
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'deploy')
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: "latest"
+
+      - name: Install OpenShift CLI
+        run: |
+          curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz -o oc.tar.gz
+          tar xzf oc.tar.gz
+          sudo mv oc /usr/local/bin/
+          sudo chmod +x /usr/local/bin/oc
+          rm -f oc.tar.gz README.md || true
+          oc version
+
+      - name: Log in to OpenShift
+        uses: redhat-actions/oc-login@v1
+        with:
+          openshift_server_url: ${{ secrets.OPENSHIFT_SERVER }}
+          openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
+          namespace: ${{ secrets.OPENSHIFT_NAMESPACE }}
+
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install sretodo-release ./kubernetes \
+            --namespace ${{ secrets.OPENSHIFT_NAMESPACE }} \
+            --set frontend.image=${{ needs.build-and-push.outputs.image_repo_frontend }} \
+            --set frontend.tag=${{ needs.build-and-push.outputs.image_tag }} \
+            --set javaTodo.enabled=true \
+            --set javaTodo.image=${{ needs.build-and-push.outputs.image_repo_java }} \
+            --set javaTodo.tag=${{ needs.build-and-push.outputs.image_tag }} \
+            --set dotnetStatistik.enabled=true \
+            --set dotnetStatistik.image=${{ needs.build-and-push.outputs.image_repo_dotnet }} \
+            --set dotnetStatistik.tag=${{ needs.build-and-push.outputs.image_tag }} \
+            --set pythonPomodoro.enabled=true \
+            --set pythonPomodoro.image=${{ needs.build-and-push.outputs.image_repo_python }} \
+            --set pythonPomodoro.tag=${{ needs.build-and-push.outputs.image_tag }} \
+            --set postgres.enabled=true \
+            --set observabilityStack.enabled=true \
+            --set nginxGateway.enabled=true
+
+  # Deploy only without building
+  deploy-only:
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'deploy-only'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set repository owner lowercase
+        id: lowercase
+        run: |
+          echo "repository_owner_lowercase=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: "latest"
+
+      - name: Install OpenShift CLI
+        run: |
+          curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz -o oc.tar.gz
+          tar xzf oc.tar.gz
+          sudo mv oc /usr/local/bin/
+          sudo chmod +x /usr/local/bin/oc
+          rm -f oc.tar.gz README.md || true
+          oc version
+
+      - name: Log in to OpenShift
+        uses: redhat-actions/oc-login@v1
+        with:
+          openshift_server_url: ${{ secrets.OPENSHIFT_SERVER }}
+          openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
+          namespace: ${{ secrets.OPENSHIFT_NAMESPACE }}
+
+      - name: Deploy with Helm using existing images
+        run: |
+          echo "Deploying with existing image tag: ${{ github.event.inputs.existing_tag }}"
+
+          helm upgrade --install ${{ github.event.inputs.release_name }} ./kubernetes \
+            --namespace ${{ secrets.OPENSHIFT_NAMESPACE }} \
+            --set frontend.image=ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-frontend \
+            --set frontend.tag=${{ github.event.inputs.existing_tag }} \
+            --set javaTodo.enabled=true \
+            --set javaTodo.image=ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-service-java-todo \
+            --set javaTodo.tag=${{ github.event.inputs.existing_tag }} \
+            --set dotnetStatistik.enabled=true \
+            --set dotnetStatistik.image=ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-service-dotnet-statistik \
+            --set dotnetStatistik.tag=${{ github.event.inputs.existing_tag }} \
+            --set pythonPomodoro.enabled=true \
+            --set pythonPomodoro.image=ghcr.io/${{ steps.lowercase.outputs.repository_owner_lowercase }}/sretodo-service-python-pomodoro \
+            --set pythonPomodoro.tag=${{ github.event.inputs.existing_tag }} \
+            --set postgres.enabled=true \
+            --set observabilityStack.enabled=true \
+            --set nginxGateway.enabled=true
+
+  destroy-from-openshift:
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: "latest"
+
+      - name: Install OpenShift CLI
+        run: |
+          curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz -o oc.tar.gz
+          tar xzf oc.tar.gz
+          sudo mv oc /usr/local/bin/
+          sudo chmod +x /usr/local/bin/oc
+          rm -f oc.tar.gz README.md || true
+          oc version
+
+      - name: Log in to OpenShift
+        uses: redhat-actions/oc-login@v1
+        with:
+          openshift_server_url: ${{ secrets.OPENSHIFT_SERVER }}
+          openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
+          namespace: ${{ secrets.OPENSHIFT_NAMESPACE }}
+
+      - name: Uninstall Helm Chart
+        run: |
+          echo "Uninstalling Helm release ${{ github.event.inputs.release_name }} from namespace ${{ secrets.OPENSHIFT_NAMESPACE }}"
+          helm uninstall ${{ github.event.inputs.release_name }} -n ${{ secrets.OPENSHIFT_NAMESPACE }}
+
+      - name: Verify resources are deleted
+        run: |
+          echo "Verifying all resources are deleted..."
+          oc get all -l app=sretodo -n ${{ secrets.OPENSHIFT_NAMESPACE }}
+
+      - name: Clean up persistent volumes
+        run: |
+          echo "Cleaning up persistent volumes claims..."
+          oc delete pvc --selector=app=sretodo -n ${{ secrets.OPENSHIFT_NAMESPACE }}

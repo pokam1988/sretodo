@@ -1,0 +1,48 @@
+h2 {
+  color: #2a5298;
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+/* Pomodoro Styles (aus app.component.html übernommen) */
+.pomodoro-view p {
+  margin: 5px 0;
+}
+.pomodoro-view button {
+  padding: 8px 15px;
+  margin-right: 10px;
+  margin-top: 10px; /* Kleiner Abstand nach oben */
+  background-color: #5cb85c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.3s ease;
+}
+.pomodoro-view button.stop {
+  background-color: #d9534f;
+}
+.pomodoro-view button:hover {
+  opacity: 0.9;
+}
+.pomodoro-view button:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
+}
+.pomodoro-status {
+  font-weight: bold;
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #eef;
+  border-left: 4px solid #2a5298;
+  border-radius: 4px; /* Leichte Abrundung */
+}
+.pomodoro-status .countdown {
+    font-size: 1.2em;
+    color: #1e3c72;
+}
+.pomodoro-controls {
+    margin-top: 20px;
+}

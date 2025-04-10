@@ -1,0 +1,405 @@
+# Default values for sretodo-chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  # repository: Wird für jeden Service unten spezifisch gesetzt
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  # tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+  # Automount API credentials for the Service Account
+  automount: true
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  {}
+  # fsGroup: 2000
+
+securityContext:
+  {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+# Allgemeine Konfigurationen
+config:
+  otel:
+    # Endpoint für den OTel Collector Service innerhalb des K8s Clusters
+    # Wird jetzt vom Sub-Chart bereitgestellt. Der tatsächliche Service-Name muss
+    # aus dem deployten Sub-Chart ermittelt werden (oft <Release-Name>-otel-collector)
+    # TODO: Namen verifizieren und ggf. hier oder in den Deployments anpassen
+    collectorServiceName: "{{ .Release.Name }}-otel-collector"
+    collectorEndpointHttp: "http://{{ .Release.Name }}-otel-collector:4318"
+    collectorEndpointGrpc: "http://{{ .Release.Name }}-otel-collector:4317"
+
+# Service-spezifische Konfigurationen
+# Beispiel für einen Service:
+serviceJavaTodo:
+  enabled: true
+  image:
+    repository: sretodo-service-java-todo # Annahme: Image-Name aus Docker Compose
+    tag: latest # Oder spezifische Version
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 8080
+  # environment: Hier kommen service-spezifische Env-Vars hin
+  #   z.B. OTEL_SERVICE_NAME
+
+servicePythonPomodoro:
+  enabled: true
+  image:
+    repository: sretodo-service-python-pomodoro
+    tag: latest
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 8002
+
+serviceDotnetStatistik:
+  enabled: true
+  image:
+    repository: sretodo-service-dotnet-statistik
+    tag: latest
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 8080
+
+serviceGoHealthcheck:
+  enabled: true
+  image:
+    repository: sretodo-service-go-healthcheck
+    tag: latest
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 8003
+
+frontendAngular:
+  enabled: true
+  image:
+    repository: sretodo-frontend-angular
+    tag: latest
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 80 # Interner Port des Nginx im Frontend-Image
+
+nginxGateway:
+  enabled: true
+  image:
+    repository: sretodo-nginx-gateway
+    tag: latest
+  replicaCount: 1
+  service:
+    type: LoadBalancer # Oder NodePort/ClusterIP je nach K8s/OpenShift-Setup
+    port: 80
+    targetPort: 80
+  # Hier könnte die OpenShift Route oder Ingress Konfiguration hin
+  route:
+    enabled: false # <<< Standardmäßig deaktivieren für lokale K8s-Tests
+    # host: sretodo.apps.<cluster-domain> # Muss angepasst werden
+
+# Observability Stack Konfiguration (Beispiele)
+otelCollector:
+  enabled: true
+  image:
+    repository: otel/opentelemetry-collector-contrib
+    tag: 0.123.0 # Beispiel
+  replicaCount: 1
+  # service: ... (ClusterIP ist Standard)
+  # config: in ConfigMap Template
+
+# Konfiguration für die Dependencies (Sub-Charts)
+
+# OTel Collector Sub-Chart Konfiguration
+otel-collector: # <<< KORREKTER ALIAS VERWENDEN
+  enabled: true
+
+  # --- Add required values from sub-chart linting (at the correct level) ---
+  mode: deployment
+  image:
+    repository: otel/opentelemetry-collector-contrib
+    tag: 0.103.1 # Specify a valid tag
+    pullPolicy: IfNotPresent
+
+  # Hier Werte für das open-telemetry/opentelemetry-collector Chart überschreiben
+  # Wichtig: Die Collector-Konfiguration selbst! (Diese ist oft verschachtelt, z.B. unter 'config:')
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+            cors:
+              allowed_origins:
+                - "*" # Alle Ursprünge erlauben
+              allowed_headers:
+                - "*" # Alle Header erlauben
+    processors:
+      batch:
+        send_batch_size: 1024
+        timeout: 10s
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 75
+        spike_limit_percentage: 25
+      resource:
+        attributes:
+          - key: deployment.environment
+            value: "development"
+            action: upsert
+          - key: loki.resource.labels
+            value: service.name
+            action: insert
+
+    exporters:
+      debug:
+        verbosity: detailed
+
+      prometheus:
+        endpoint: "0.0.0.0:8889"
+        namespace: "sretodo_mvp"
+
+      otlphttp/tempo:
+        # TODO: Genauen Service-Namen des Tempo Sub-Charts prüfen!
+        endpoint: "http://{{ $.Release.Name }}-tempo:4318"
+        tls:
+          insecure: true
+
+      loki:
+        # TODO: Genauen Service-Namen des Loki Sub-Charts prüfen!
+        endpoint: "http://{{ $.Release.Name }}-loki:3100/loki/api/v1/push"
+        default_labels_enabled:
+          exporter: false
+          job: false
+          instance: false
+          level: false
+
+    service:
+      telemetry:
+        logs:
+          level: "info"
+        metrics:
+          address: 0.0.0.0:8888
+      extensions: [health_check]
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, batch]
+          exporters: [debug, otlphttp/tempo]
+        metrics:
+          receivers: [otlp]
+          processors: [memory_limiter, batch]
+          exporters: [debug, prometheus]
+        logs:
+          receivers: [otlp]
+          processors: [memory_limiter, batch, resource]
+          exporters: [debug, loki]
+
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+
+prometheus:
+  enabled: true
+  alertmanager:
+    enabled: false
+  configmapReload:
+    prometheus:
+      enabled: false
+  kube-state-metrics:
+    enabled: false
+  prometheus-node-exporter:
+    enabled: false
+  prometheus-pushgateway:
+    enabled: false
+  # ... (Prometheus config wie zuvor, ggf. Scrape-Config anpassen) ...
+  server:
+    # Beispielhafte Annahme für Scrape-Config im Prometheus Sub-Chart
+    # TODO: Genauen Mechanismus und Service-Namen prüfen!
+    additionalScrapeConfigs:
+      - job_name: "otel-collector"
+        static_configs:
+          - targets:
+              ['{{ printf "%s-%s:%d" .Release.Name "otel-collector" 8889 }}']
+    persistentVolume:
+      enabled: true
+
+loki:
+  enabled: false
+
+  # --- Define expected configMap names for sub-chart ---
+  configMap:
+    name: loki # Ensure the main configmap is named 'loki'
+  runtimeConfig:
+    configMap:
+      name: loki-runtime # Ensure the runtime configmap is named 'loki-runtime'
+
+  # --- Configuration for the Loki application itself (nested under loki.loki) ---
+  loki:
+    # --- Force a specific, older image tag ---
+    image:
+      registry: docker.io # Default
+      repository: grafana/loki
+      tag: "3.0.0" # Try older stable tag
+    # --- End image tag override ---
+
+    # Explicitly define common storage as filesystem (preferred method)
+    common:
+      path_prefix: /var/loki # Use default Loki path prefix
+      replication_factor: 1 # Default for single node setup
+      storage:
+        filesystem:
+          directory: /var/loki/chunks
+
+    # --- Add dummy storage block to satisfy template --- >
+    storage:
+      bucketNames:
+        chunks: "" # Dummy value to prevent nil pointer
+        ruler: "" # Dummy value
+        admin: "" # Dummy value
+    # --- < End dummy storage block ---
+
+    # Schema using boltdb-shipper with filesystem object store
+    schema_config:
+      configs:
+        - from: 2020-10-24
+          store: boltdb-shipper
+          object_store: filesystem # Explicitly filesystem
+          schema: v11
+          index:
+            prefix: index_ # Relative to common.path_prefix
+            period: 24h
+
+    # Configure compactor to use filesystem shared store
+    compactor:
+      working_directory: /var/loki/compactor # Relative to common.path_prefix
+      shared_store: filesystem # Explicitly filesystem
+
+    # Configure storage_config's boltdb-shipper for filesystem (might be redundant but safe)
+    storage_config:
+      boltdb_shipper:
+        active_index_directory: /var/loki/index # Relative to common.path_prefix
+        cache_location: /var/loki/cache # Relative to common.path_prefix
+        shared_store: filesystem # Explicitly filesystem
+
+  # --- Enable global persistence (directly under loki alias) ---
+  persistence:
+    enabled: true
+    size: 10Gi
+    # storageClass: "-" # Use default or specify one
+
+tempo:
+  enabled: false
+  tempo:
+    metricsGenerator:
+      enabled: false
+    storage:
+      trace:
+        backend: local
+        local:
+          path: /var/tempo/traces
+  persistence:
+    enabled: true
+
+grafana:
+  enabled: true
+  adminPassword: "admin"
+  persistence:
+    enabled: true
+  # Beispielhafte Annahme für Datasource Provisioning im Grafana Sub-Chart
+  # TODO: Genauen Mechanismus und Service-Namen prüfen!
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          url: http://{{ printf "%s-%s-server" .Release.Name "prometheus" }} # Annahme für Prometheus Service
+          access: proxy
+          isDefault: true
+        - name: Loki
+          type: loki
+          url: http://{{ printf "%s-%s:%d" .Release.Name "loki" 3100 }} # Annahme für Loki Service
+          access: proxy
+        - name: Tempo
+          type: tempo
+          url: http://{{ printf "%s-%s:%d" .Release.Name "tempo" 3200 }} # Annahme für Tempo Service
+          access: proxy
+
+postgresql:
+  enabled: true
+  auth:
+    username: "sre"
+    password: "verysecret"
+    database: "sretodo_db"
+  primary:
+    persistence:
+      enabled: true
+
+# Ingress (Alternative zu OpenShift Routes)
+ingress:
+  enabled: false
+  # className: ""
+  # annotations: {}
+  #   # kubernetes.io/ingress.class: nginx
+  #   # kubernetes.io/tls-acme: "true"
+  # hosts:
+  #   - host: chart-example.local
+  #     paths:
+  #       - path: /
+  #         pathType: ImplementationSpecific
+  # tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources:
+  {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with limited
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

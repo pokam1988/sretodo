@@ -1,1 +1,95 @@
 /* You can add global styles to this file, and also import other style files */
+
+/* Global Styles */
+
+/* Basic Reset & Body Style */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  background-color: #f4f7f6;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Header Styles (aus app.component.html übernommen) */
+.app-header {
+  background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
+  color: white;
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.app-header h1 {
+  margin: 0;
+  font-size: 1.8em;
+  font-weight: 500;
+}
+.app-header nav a {
+  color: white;
+  text-decoration: none;
+  margin-left: 20px;
+  padding: 8px 15px;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+  cursor: pointer; /* Für Klickbarkeit */
+}
+.app-header nav a:hover,
+.app-header nav a.active {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Main Content Styles (aus app.component.html übernommen) */
+.main-content {
+  flex: 1; /* Fill remaining vertical space */
+  padding: 30px;
+  max-width: 900px;
+  margin: 20px auto; /* Center content */
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Footer Styles (aus app.component.html übernommen) */
+.app-footer {
+  text-align: center;
+  padding: 20px;
+  margin-top: auto; /* Push footer down */
+  background-color: #e9ecef;
+  color: #6c757d;
+  font-size: 0.9em;
+  border-top: 1px solid #dee2e6;
+}
+
+/* Allgemeine Section Styles (optional, kann auch in Komponenten) */
+/*
+.content-section {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+.content-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+.content-section h2 {
+  color: #2a5298;
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+*/
+
+/* Allgemeine Error Message Style (aus app.component.html übernommen) */
+.error-message {
+  color: #dc3545;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 10px 15px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}

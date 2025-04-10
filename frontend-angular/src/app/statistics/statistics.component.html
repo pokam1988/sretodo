@@ -1,0 +1,15 @@
+<h2>Statistik</h2>
+
+<!-- Error Message Display -->
+<div *ngIf="error" class="error-message">
+  {{ error }}
+</div>
+
+<div *ngIf="statistics && !error" class="statistics-content">
+  <p>Gesamtzahl ToDos: {{ statistics.totalTodos }}</p>
+  <!-- Hier könnten zukünftige Statistiken angezeigt werden -->
+</div>
+
+<div *ngIf="!statistics && !error">
+  <p>Lade Statistiken...</p>
+</div>

@@ -1,0 +1,29 @@
+{{- if and .Values.nginxGateway.enabled .Values.nginxGateway.route.enabled -}}
+# Nur erstellen, wenn der Gateway und die Route aktiviert sind
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ include "sretodo-chart.fullname" . }}-nginx-gateway
+  labels:
+    {{- include "sretodo-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nginx-gateway
+  # Optional: Annotations für die Route
+  # annotations:
+  #   haproxy.router.openshift.io/timeout: 5s
+spec:
+  # Optional: Hostname für die Route (wenn leer, generiert OpenShift einen)
+  {{- if .Values.nginxGateway.route.host }}
+  host: {{ .Values.nginxGateway.route.host }}
+  {{- end }}
+  to:
+    kind: Service
+    name: {{ include "sretodo-chart.fullname" . }}-nginx-gateway
+    weight: 100
+  port:
+    targetPort: http # Name des Ports im Service
+  # Optional: TLS-Konfiguration
+  # tls:
+  #   termination: edge
+  #   # Optional: insecureEdgeTerminationPolicy: Redirect oder Allow
+  wildcardPolicy: None
+{{- end }} 

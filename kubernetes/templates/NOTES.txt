@@ -1,0 +1,71 @@
+Thank you for installing {{ .Chart.Name }}.
+
+Your release is named {{ .Release.Name }}.
+
+To get started with the SRE Todo application:
+
+1. Access the application by exposing the NGINX gateway service:
+
+{{- if contains "NodePort" .Values.nginxGateway.service.type }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ .Release.Name }}-nginx-gateway)
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+{{- else if contains "LoadBalancer" .Values.nginxGateway.service.type }}
+  NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+        You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ .Release.Name }}-nginx-gateway'
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ .Release.Name }}-nginx-gateway --template "{{ "{{ range (index .status.loadBalancer.ingress 0) }}{{ . }}{{ end }}" }}")
+  echo http://$SERVICE_IP:80
+{{- else }}
+  kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ .Release.Name }}-nginx-gateway 8080:80
+  echo "Visit http://localhost:8080 to access the application"
+{{- end }}
+
+2. Access Grafana (if observability stack is enabled) to view metrics, traces, and logs:
+
+{{- if .Values.observabilityStack.enabled }}
+  kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ .Release.Name }}-grafana 3000:3000
+  echo "Visit http://localhost:3000 to access Grafana"
+  
+  Default credentials:
+  - Username: admin
+  - Password: admin
+{{- else }}
+  The observability stack is not enabled. To enable it, set observabilityStack.enabled=true in values.yaml.
+{{- end }}
+
+Enabled components:
+{{- if .Values.frontend.enabled }}
+- Frontend
+{{- end }}
+{{- if .Values.javaTodo.enabled }}
+- Java Todo Service
+{{- end }}
+{{- if .Values.dotnetStatistik.enabled }}
+- .NET Statistik Service
+{{- end }}
+{{- if .Values.pythonPomodoro.enabled }}
+- Python Pomodoro Service
+{{- end }}
+{{- if .Values.postgres.enabled }}
+- PostgreSQL Database
+{{- end }}
+{{- if .Values.nginxGateway.enabled }}
+- NGINX Gateway
+{{- end }}
+{{- if .Values.observabilityStack.enabled }}
+- Observability Stack (OpenTelemetry Collector, Prometheus, Tempo, Loki, Grafana)
+{{- end }}
+
+For troubleshooting:
+
+1. Check the status of the pods:
+   kubectl get pods --namespace {{ .Release.Namespace }}
+
+2. View logs for a specific pod:
+   kubectl logs --namespace {{ .Release.Namespace }} <pod-name>
+
+3. Describe a pod for detailed information:
+   kubectl describe pod --namespace {{ .Release.Namespace }} <pod-name>
+
+For more information, refer to the documentation at:
+https://github.com/your-organization/sretodo

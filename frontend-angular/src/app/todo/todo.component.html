@@ -1,0 +1,56 @@
+<h2>ToDo Liste</h2>
+
+<!-- Error Message Display -->
+<div *ngIf="error" class="error-message">
+  {{ error }}
+</div>
+
+<!-- ToDo List -->
+<ul class="todo-list">
+  <li *ngFor="let todo of todos" [class.completed]="todo.completed">
+    <!-- Ansichtsmodus -->
+    <div *ngIf="!todo.editing" class="todo-content">
+      <input
+        type="checkbox"
+        [checked]="todo.completed"
+        (change)="toggleTodoCompletion(todo)"
+      />
+      <span class="todo-title">{{ todo.title }}</span>
+      <div class="todo-actions">
+        <button (click)="startEdit(todo)">Edit</button>
+        <button class="delete" (click)="deleteTodo(todo.id)">Delete</button>
+      </div>
+    </div>
+
+    <!-- Bearbeitungsmodus -->
+    <div *ngIf="todo.editing" class="todo-content edit-form">
+      <input
+        type="text"
+        class="edit-input"
+        [(ngModel)]="todo.title"
+        (keyup.enter)="saveEdit(todo)"
+        (keyup.escape)="cancelEdit(todo)"
+        cdkFocusInitial
+      />
+      <div class="todo-actions">
+        <button class="save" (click)="saveEdit(todo)">Save</button>
+        <button class="cancel" (click)="cancelEdit(todo)">Cancel</button>
+      </div>
+    </div>
+  </li>
+  <li *ngIf="todos.length === 0 && !error">
+    Keine ToDos vorhanden. Gut gemacht!
+  </li>
+</ul>
+
+<!-- Add ToDo Form -->
+<form (ngSubmit)="addTodo()" class="add-todo-form">
+  <input
+    type="text"
+    placeholder="Neues ToDo hinzufügen..."
+    [(ngModel)]="newTodoTitle"
+    name="newTodoTitle"
+    required
+  />
+  <button type="submit" [disabled]="!newTodoTitle.trim()">Hinzufügen</button>
+</form>

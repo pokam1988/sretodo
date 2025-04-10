@@ -1,6 +1,49 @@
 using System.Text.Json.Serialization;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// --- OpenTelemetry Initialisierung START ---
+var serviceName = Environment.GetEnvironmentVariable("OTEL_SERVICE_NAME") ?? "service-dotnet-statistik";
+var otlpEndpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? "http://otel-collector:4317"; // gRPC
+
+builder.Logging.AddOpenTelemetry(logging =>
+{
+    logging.IncludeFormattedMessage = true;
+    logging.IncludeScopes = true;
+    logging.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName));
+    logging.AddOtlpExporter(options =>
+    {
+        options.Endpoint = new Uri(otlpEndpoint);
+        options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
+    });
+});
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService(serviceName))
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddSource(serviceName) // Eigene Quellen hinzufügen, falls manuell getraced wird
+        .AddOtlpExporter(options =>
+        {
+            options.Endpoint = new Uri(otlpEndpoint);
+            options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
+        }))
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddRuntimeInstrumentation() // Runtime-Metriken (GC, etc.)
+        .AddMeter(serviceName) // Eigene Meter hinzufügen, falls manuell gemessen wird
+        .AddOtlpExporter(options =>
+        {
+            options.Endpoint = new Uri(otlpEndpoint);
+            options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
+        }));
+// --- OpenTelemetry Initialisierung END ---
 
 // --- URLs explizit nur auf HTTP 8080 setzen ---
 builder.WebHost.UseUrls("http://+:8080");
@@ -13,8 +56,10 @@ builder.Services.AddSwaggerGen();
 // --- HTTP Client für Service-Kommunikation konfigurieren ---
 builder.Services.AddHttpClient("TodoServiceClient", client =>
 {
-    // Basis-URL für den ToDo-Service im Docker-Netzwerk
-    client.BaseAddress = new Uri("http://service-java-todo:8080/");
+    // Basis-URL für den ToDo-Service im Docker-Netzwerk oder Kubernetes
+    var todoServiceHost = Environment.GetEnvironmentVariable("TODO_SERVICE_HOST") ?? "service-java-todo";
+    var todoServicePort = Environment.GetEnvironmentVariable("TODO_SERVICE_PORT") ?? "8080";
+    client.BaseAddress = new Uri($"http://{todoServiceHost}:{todoServicePort}/");
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
@@ -46,18 +91,18 @@ app.MapGet("/statistics", async (IHttpClientFactory clientFactory) =>
         {
             var todos = await response.Content.ReadFromJsonAsync<List<TodoItem>>();
             todoCount = todos?.Count ?? 0;
-            Console.WriteLine($"[Statistics] Successfully retrieved {todoCount} ToDos.");
+            app.Logger.LogInformation("Successfully retrieved {TodoCount} ToDos.", todoCount);
         }
         else
         {
             errorMessage = $"Failed to retrieve ToDos. Status: {response.StatusCode}";
-            Console.WriteLine($"[Statistics] Error: {errorMessage}");
+            app.Logger.LogError("Failed to retrieve ToDos. Status: {StatusCode}", response.StatusCode);
         }
     }
     catch (Exception ex)
     {
         errorMessage = $"Error connecting to ToDo service: {ex.Message}";
-        Console.WriteLine($"[Statistics] Exception: {errorMessage}");
+        app.Logger.LogError(ex, "Error connecting to ToDo service.");
         // Optional: Hier könnte man einen Circuit Breaker oder bessere Fehlerbehandlung einbauen
         // Für den MVP geben wir einfach 0 zurück mit Fehlermeldung
     }
@@ -74,8 +119,8 @@ app.MapGet("/health", () => Results.Ok(new { status = "UP" }))
 .WithName("HealthCheck")
 .WithOpenApi();
 
-
-Console.WriteLine("Statistics Service started.");
+// Console.WriteLine("Statistics Service started."); // Ersetzt durch Logging
+app.Logger.LogInformation("Statistics Service starting.");
 app.Run();
 
 // --- Datenmodell für die Deserialisierung der ToDo-Antwort ---

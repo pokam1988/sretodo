@@ -44,18 +44,24 @@ Das Frontend kommuniziert mit den Backend-Services über das Nginx Gateway unter
 
 Dieses Verzeichnis enthält die Angular-Frontend-Anwendung für die SRE ToDo Demo.
 
-## Funktionen
+## Funktionalität
 
--   Zeigt eine Liste von ToDos an.
+-   Zeigt eine Liste von ToDos an, die vom `service-java-todo` über das Nginx Gateway abgerufen werden.
+-   Zeigt Statistiken (aktuell nur die Anzahl der ToDos) vom `service-dotnet-statistik` an.
 -   Ermöglicht das Hinzufügen neuer ToDos.
 -   Ermöglicht das Umschalten des Erledigt-Status von ToDos.
 -   Ermöglicht das Löschen von ToDos.
--   **Neu:** Ermöglicht das Bearbeiten des Titels bestehender ToDos.
--   Zeigt einfache Statistiken (Gesamtzahl der ToDos) vom Statistik-Service an.
--   Zeigt den Status des Pomodoro-Timers an und ermöglicht das Starten/Stoppen.
--   Zeigt einen Countdown für laufende Pomodoro-Timer.
--   Navigationsleiste zum Umschalten zwischen ToDo-, Statistik- und Pomodoro-Ansicht.
--   Grundlegendes Fehlerhandling bei API-Aufrufen.
+-   Implementiert eine Pomodoro-Timer-Ansicht mit Start/Stop-Funktionalität und Countdown-Anzeige, gesteuert über `service-python-pomodoro`.
+-   **Neu:** Ermöglicht das Bearbeiten des Textes bestehender ToDos.
+
+## Implementierungsdetails
+
+-   Verwendet Angular mit Standalone Components.
+-   **Routing:** Nutzt das Angular Routing Modul (`provideRouter`, `app.routes.ts`, `RouterOutlet`, `RouterLink`, `RouterLinkActive`) um zwischen den Ansichten ToDo, Pomodoro und Statistik zu navigieren. Die Logik für die einzelnen Ansichten wurde in dedizierte Komponenten ausgelagert (`TodoComponent`, `PomodoroComponent`, `StatisticsComponent`).
+-   **Styling:** Globale Styles (Layout, Header, Footer) sind in `src/styles.scss` definiert. Komponenten-spezifische Styles befinden sich in den jeweiligen `.scss`-Dateien der Komponenten.
+-   Kommuniziert mit den Backend-Services über HTTP-Anfragen an das Nginx Gateway (`/api/...`) mittels eines zentralen `ApiService` (`api.service.ts`).
+-   **Modelle:** Verwendet Interfaces (`Todo`, `PomodoroState`, `Statistics`) definiert in `models.ts`.
+-   **OpenTelemetry:** Ist integriert, um Traces für Seitenaufrufe, Klicks und HTTP-Anfragen (Fetch/XHR) zu generieren. Die Konfiguration erfolgt in `src/app/tracing.ts` und wird in `src/main.ts` initialisiert.
 
 ## Technische Details
 
@@ -69,6 +75,10 @@ Dieses Verzeichnis enthält die Angular-Frontend-Anwendung für die SRE ToDo Dem
 
 Das Frontend wird als Teil des gesamten Stacks mit `docker-compose up` gebaut und gestartet. Es ist über das Nginx-Gateway auf `http://localhost/` erreichbar.
 
+## Starten (in Kubernetes via Helm)
+
+Das Frontend wird zusammen mit den anderen Services über Helm bereitgestellt (siehe `kubernetes/README.md`). Der Zugriff erfolgt ebenfalls über das Nginx Gateway, dessen Adresse vom Ingress-Controller abhängt (z.B. `http://localhost/` bei lokalem K8s).
+
 ## Entwicklung
 
 -   `cd frontend-angular`
@@ -77,10 +87,10 @@ Das Frontend wird als Teil des gesamten Stacks mit `docker-compose up` gebaut un
 
 ## Nächste Schritte / TODOs
 
--   [ ] Korrekte Implementierung von Angular Routing anstelle von `*ngIf` für die Ansichten.
--   [ ] OpenTelemetry-Instrumentierung hinzufügen.
 -   [ ] UI/UX-Verbesserungen.
--   [ ] Auslagern der Interfaces in eigene Dateien (`models.ts`).
+-   [x] OpenTelemetry-Instrumentierung hinzufügen.
+-   [x] Korrekte Implementierung von Angular Routing anstelle von `*ngIf` für die Ansichten.
+-   [x] Auslagern der Interfaces in eigene Dateien (`models.ts`).
 
 # FrontendAngular
 

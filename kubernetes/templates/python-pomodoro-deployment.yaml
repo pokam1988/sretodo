@@ -1,0 +1,77 @@
+{{- if .Values.pythonPomodoro.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-python-pomodoro
+  labels:
+    {{- include "sretodo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: python-pomodoro
+spec:
+  replicas: {{ .Values.pythonPomodoro.replicas }}
+  selector:
+    matchLabels:
+      {{- include "sretodo.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: python-pomodoro
+  template:
+    metadata:
+      labels:
+        {{- include "sretodo.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: python-pomodoro
+    spec:
+      # Reference the global image pull secret
+      imagePullSecrets:
+        - name: {{ .Values.global.image.pullSecret }}
+      # OpenShift compatible security context
+      securityContext:
+        fsGroup: 1006530000
+      containers:
+        - name: python-pomodoro
+          # Construct image path using global prefix, service name, and service-specific tag
+          image: "{{ .Values.global.repositoryPrefix }}/{{ .Values.pythonPomodoro.imageName }}:{{ .Values.pythonPomodoro.tag }}"
+          imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1006530000
+          ports:
+            - name: http
+              containerPort: 8002
+              protocol: TCP
+          # Health checks
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          env:
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://{{ .Release.Name }}-otel-collector:4317
+            - name: TODO_SERVICE_URL
+              value: http://{{ .Release.Name }}-java-todo:8080
+          resources:
+            {{- toYaml .Values.pythonPomodoro.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-python-pomodoro
+  labels:
+    {{- include "sretodo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: python-pomodoro
+spec:
+  type: {{ .Values.pythonPomodoro.service.type }}
+  ports:
+    - port: 8002
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "sretodo.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: python-pomodoro
+{{- end }}

@@ -1,0 +1,169 @@
+# Default values for SRE Todo Helm chart
+
+# Global settings
+global:
+  image:
+    tag: latest # Default tag for application images
+    pullPolicy: Always # Default pull policy
+    # Name of the secret used to pull images from private registries like GHCR
+    # Ensure this secret exists in the target namespace.
+    # Create it using: kubectl create secret docker-registry <secretName> --docker-server=ghcr.io --docker-username=<user> --docker-password=<pat> -n <namespace>
+    pullSecret: ghcr-secret
+  repositoryPrefix: ghcr.io/mistral-valaise # Prefix for application images
+
+# Frontend Configuration
+frontend:
+  enabled: true
+  replicas: 1
+  # Image name suffix, prefix is global
+  imageName: sretodo-frontend
+  # Add specific tag for this service
+  tag: a0a85f3 # <-- TODO: Change to a specific, existing tag if 'latest' doesn't exist or causes issues
+  # tag and pullPolicy come from global
+  service:
+    type: ClusterIP
+    port: 8080 # Port changed for OpenShift compatibility
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+# Java Todo Service
+javaTodo:
+  enabled: true
+  replicas: 1
+  # Image name suffix
+  imageName: sretodo-java-todo
+  # Add specific tag for this service
+  tag: afa966b # <-- TODO: Change to a specific, existing tag if 'latest' doesn't exist or causes issues
+  # tag and pullPolicy come from global
+  service:
+    type: ClusterIP
+    port: 8080 # Standard Spring Boot port
+  resources:
+    limits:
+      cpu: "1" # Changed to string
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# .NET Statistik Service
+dotnetStatistik:
+  enabled: true
+  replicas: 1
+  # Image name suffix
+  imageName: sretodo-dotnet-statistik
+  # Add specific tag for this service
+  tag: 5f5c04a # <-- TODO: Change to a specific, existing tag if 'latest' doesn't exist or causes issues
+  # tag and pullPolicy come from global
+  service:
+    type: ClusterIP
+    port: 8080 # Port changed for OpenShift compatibility
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Python Pomodoro Service
+pythonPomodoro:
+  enabled: true
+  replicas: 1
+  # Image name suffix
+  imageName: sretodo-python-pomodoro
+  # Add specific tag for this service
+  tag: 5f5c04a # <-- TODO: Change to a specific, existing tag if 'latest' doesn't exist or causes issues
+  # tag and pullPolicy come from global
+  service:
+    type: ClusterIP
+    port: 8002 # Example port for Python service
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# PostgreSQL Database
+postgres:
+  enabled: true
+  replicas: 1
+  # Keeping specific image for postgres
+  image: postgres
+  tag: "16-alpine" # Updated to 16
+  pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  persistence:
+    enabled: false # Disabled for simpler deployment, consider enabling for state
+    size: 1Gi
+  env:
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres # Consider using secrets
+    POSTGRES_DB: sretodo
+
+# Observability Stack - Keeping specific images/tags here
+observabilityStack:
+  enabled: true
+
+  # OpenTelemetry Collector
+  otelCollector:
+    image: otel/opentelemetry-collector-contrib
+    tag: 0.103.1 # Using a specific version
+    pullPolicy: Always
+
+  # Prometheus
+  prometheus:
+    image: prom/prometheus
+    tag: v2.53.1 # Using a specific version
+    pullPolicy: Always
+
+  # Tempo
+  tempo:
+    image: grafana/tempo
+    tag: 2.7.1 # Keeping specific version from techContext
+    pullPolicy: Always
+
+  # Loki
+  loki:
+    image: grafana/loki
+    tag: 3.1.0 # Using a specific version
+    pullPolicy: Always
+
+  # Grafana
+  grafana:
+    image: grafana/grafana
+    tag: 11.1.0 # Keeping specific version from techContext
+    pullPolicy: Always
+
+# NGINX Gateway
+nginxGateway:
+  enabled: true
+  replicas: 1
+  image: nginx
+  tag: "1.27.0-alpine" # Using a specific alpine version
+  pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8080 # Port changed for OpenShift compatibility
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi

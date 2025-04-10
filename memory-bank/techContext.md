@@ -34,9 +34,9 @@
 -   **Containerization:** Docker
 -   **Local Orchestration:** Docker Compose
 -   **Datenbank:** PostgreSQL (`postgres:16-alpine` Image in Docker Compose)
--   **Target Production Orchestration (Future):** Kubernetes / OpenShift
+-   **Target Production Orchestration:** Kubernetes / OpenShift (via Helm-Charts im `kubernetes/` Verzeichnis)
 -   **Source Code Management:** Git (Repository hosted on GitHub)
--   **CI/CD (Future):** GitLab CI/CD (or GitHub Actions)
+-   **CI/CD:** GitHub Actions (`.github/workflows/deploy.yaml`) für Build, Push zu GitHub Container Registry (ghcr.io), und Deployment zu OpenShift via Helm.
 
 ## 4. Key Technical Considerations & Constraints
 

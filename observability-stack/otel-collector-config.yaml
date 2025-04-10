@@ -7,9 +7,15 @@ receivers:
       http:
         endpoint: 0.0.0.0:4318
         cors:
-          allowed_origins: # Erlaube Anfragen vom Frontend (ggf. anpassen)
-            - "http://localhost:4200"
-            - "http://127.0.0.1:4200"
+          allowed_origins:
+            - "*" # Alle Ursprünge erlauben
+          allowed_headers:
+            - "*" # Alle Header erlauben
+          exposed_headers:
+            - "*" # Alle Header exponieren
+          allow_credentials: true
+          max_age: 7200
+          # expose_headers: ["*] # Standard sollte reichen
 
 processors:
   batch:

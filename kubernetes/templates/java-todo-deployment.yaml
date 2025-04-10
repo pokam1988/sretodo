@@ -1,0 +1,88 @@
+{{- if .Values.javaTodo.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-java-todo
+  labels:
+    {{- include "sretodo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: java-todo
+spec:
+  replicas: {{ .Values.javaTodo.replicas }}
+  selector:
+    matchLabels:
+      {{- include "sretodo.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: java-todo
+  template:
+    metadata:
+      labels:
+        {{- include "sretodo.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: java-todo
+    spec:
+      # Reference the global image pull secret
+      imagePullSecrets:
+        - name: {{ .Values.global.image.pullSecret }}
+      # OpenShift compatible security context
+      securityContext:
+        fsGroup: 1006530000
+      containers:
+        - name: java-todo
+          # Construct image path using global prefix, service name, and service-specific tag
+          image: "{{ .Values.global.repositoryPrefix }}/{{ .Values.javaTodo.imageName }}:{{ .Values.javaTodo.tag }}"
+          imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1006530000
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          # Health checks
+          resources:
+            limits:
+              cpu: '1'
+              memory: 1Gi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://{{ .Release.Name }}-postgres:5432/sretodo
+            - name: SPRING_DATASOURCE_USERNAME
+              value: postgres
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: postgres
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://{{ .Release.Name }}-otel-collector:4318
+          resources:
+            {{- toYaml .Values.javaTodo.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-java-todo
+  labels:
+    {{- include "sretodo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: java-todo
+spec:
+  type: {{ .Values.javaTodo.service.type }}
+  ports:
+    - port: 8080
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "sretodo.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: java-todo
+{{- end }}

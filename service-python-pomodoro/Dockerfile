@@ -13,18 +13,19 @@ WORKDIR /app
 # Installiere Systemabhängigkeiten falls nötig (hier erstmal keine)
 # RUN apt-get update && apt-get install -y --no-install-recommends some-package && rm -rf /var/lib/apt/lists/*
 
-# Installiere Python-Abhängigkeiten
-# Kopiere zuerst nur die requirements.txt, um den Docker Cache zu nutzen
-COPY requirements.txt .
+# Kopiere den gesamten Anwendungscode zuerst
+COPY . .
+
+# Installiere Python-Abhängigkeiten aus der bereits kopierten requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Kopiere den Rest des Anwendungscodes
-COPY . .
+# Installiere automatisch erkannte Instrumentierungen (z.B. für FastAPI)
+RUN opentelemetry-bootstrap -a install
 
 # Exponiere den Port, den die Anwendung verwendet (aus app.py und docker-compose.yml)
 EXPOSE 8002
 
-# Kommando zum Starten der Anwendung mit uvicorn
-# uvicorn app:app --host 0.0.0.0 --port 8002
-# app:app bedeutet: In der Datei app.py finde das FastAPI Objekt namens app
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8002"] 
+# Kommando zum Starten der Anwendung über den OTel Instrumentierungs-Agent
+# Dieser Agent liest Umgebungsvariablen wie OTEL_TRACES_EXPORTER, OTEL_METRICS_EXPORTER etc.
+# und startet dann uvicorn.
+CMD ["opentelemetry-instrument", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8002"] 
