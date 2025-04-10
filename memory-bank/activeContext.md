@@ -157,7 +157,7 @@ Additionally, we're maintaining and improving the OpenShift deployment with:
    - Added release name and image tag parameters for flexible deployments
 
 2. Made Kubernetes deployments OpenShift compatible:
-   - Updated security contexts to use non-root users (runAsUser: 1006530000)
+   - Updated security contexts to use non-root users (runAsUser: 1011430000)
    - Changed web services from port 80 to port 8080
    - Updated service mappings to connect port 80 to targetPort 8080
    - Added proper fsGroup settings for OpenShift compatibility
@@ -187,6 +187,6 @@ Additionally, we're maintaining and improving the OpenShift deployment with:
 ## Active Decisions and Considerations
 
 1. We've decided to use a "deploy-only" workflow to allow for quicker deployments when only configuration changes are needed
-2. We're standardizing on non-root user IDs for OpenShift compatibility (1006530000 for most services)
+2. We're standardizing on non-root user IDs for OpenShift compatibility (1011430000 for most services)
 3. We're keeping frontend and backend services separate with communication through the NGINX gateway
 4. We're maintaining the full observability stack (OTel Collector, Prometheus, Tempo, Loki, Grafana) in the deployment 

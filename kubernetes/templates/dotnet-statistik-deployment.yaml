@@ -23,7 +23,7 @@ spec:
         - name: {{ .Values.global.image.pullSecret }}
       # OpenShift compatible security context
       securityContext:
-        fsGroup: 1006530000
+        fsGroup: 1011430000
       containers:
         - name: dotnet-statistik
           image: "{{ .Values.global.repositoryPrefix }}/{{ .Values.dotnetStatistik.imageName }}:{{ .Values.dotnetStatistik.tag }}"
@@ -39,8 +39,8 @@ spec:
               value: http://{{ .Release.Name }}-otel-collector:4317
           securityContext:
             runAsNonRoot: true
-            runAsUser: 1006530000
-            runAsGroup: 1006530000
+            runAsUser: 1011430000
+            runAsGroup: 1011430000
           ports:
             - name: http
               containerPort: 8080

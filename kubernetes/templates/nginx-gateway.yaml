@@ -19,15 +19,15 @@ spec:
         app.kubernetes.io/component: nginx-gateway
     spec:
       securityContext:
-        fsGroup: 1006530000
+        fsGroup: 1011430000
       containers:
         - name: nginx-gateway
           image: "{{ .Values.nginxGateway.image }}:{{ .Values.nginxGateway.tag }}"
           imagePullPolicy: {{ .Values.nginxGateway.pullPolicy }}
           securityContext:
             runAsNonRoot: true
-            runAsUser: 1006530000
-            runAsGroup: 1006530000
+            runAsUser: 1011430000
+            runAsGroup: 1011430000
           ports:
             - name: http
               containerPort: 8080

@@ -207,9 +207,9 @@
 
 1. Updated the Kubernetes Helm chart to be compatible with OpenShift security requirements:
    - Modified frontend deployment to use port 8080 instead of 80
-   - Added security context with non-root user (runAsUser: 1006530000) to frontend deployment
+   - Added security context with non-root user (runAsUser: 1011430000) to frontend deployment
    - Updated NGINX gateway to listen on port 8080 instead of 80
-   - Added security context with non-root user (runAsUser: 1006530000) to NGINX gateway
+   - Added security context with non-root user (runAsUser: 1011430000) to NGINX gateway
    - Added proper security context for PostgreSQL (runAsUser: 26)
 
 2. Improved the Helm chart structure:

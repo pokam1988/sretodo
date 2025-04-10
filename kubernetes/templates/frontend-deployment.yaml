@@ -20,7 +20,7 @@ spec:
       imagePullSecrets:
         - name: {{ .Values.global.image.pullSecret }}
       securityContext:
-        fsGroup: 1006530000
+        fsGroup: 1011430000
       containers:
       - name: frontend-angular
         image: "{{ .Values.global.repositoryPrefix }}/{{ .Values.frontend.imageName }}:{{ .Values.frontend.tag }}"
@@ -30,8 +30,8 @@ spec:
           name: http
         securityContext:
           runAsNonRoot: true
-          runAsUser: 1006530000
-          runAsGroup: 1006530000
+          runAsUser: 1011430000
+          runAsGroup: 1011430000
         resources:
           limits:
             cpu: {{ .Values.frontend.resources.limits.cpu }}

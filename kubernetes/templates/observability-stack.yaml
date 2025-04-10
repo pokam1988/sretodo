@@ -21,15 +21,15 @@ spec:
         app.kubernetes.io/component: otel-collector
     spec:
       securityContext:
-        fsGroup: 1006530000
+        fsGroup: 1011430000
       containers:
         - name: otel-collector
           image: "{{ .Values.observabilityStack.otelCollector.image }}:{{ .Values.observabilityStack.otelCollector.tag }}"
           imagePullPolicy: {{ .Values.observabilityStack.otelCollector.pullPolicy }}
           securityContext:
             runAsNonRoot: true
-            runAsUser: 1006530000
-            runAsGroup: 1006530000
+            runAsUser: 1011430000
+            runAsGroup: 1011430000
           ports:
             - name: otlp-grpc
               containerPort: 4317
@@ -140,15 +140,15 @@ spec:
         app.kubernetes.io/component: prometheus
     spec:
       securityContext:
-        fsGroup: 1006530000
+        fsGroup: 1011430000
       containers:
         - name: prometheus
           image: "{{ .Values.observabilityStack.prometheus.image }}:{{ .Values.observabilityStack.prometheus.tag }}"
           imagePullPolicy: {{ .Values.observabilityStack.prometheus.pullPolicy }}
           securityContext:
             runAsNonRoot: true
-            runAsUser: 1006530000
-            runAsGroup: 1006530000
+            runAsUser: 1011430000
+            runAsGroup: 1011430000
           ports:
             - name: http
               containerPort: 9090
@@ -223,15 +223,15 @@ spec:
         app.kubernetes.io/component: tempo
     spec:
       securityContext:
-        fsGroup: 1006530000
+        fsGroup: 1011430000
       containers:
         - name: tempo
           image: "{{ .Values.observabilityStack.tempo.image }}:{{ .Values.observabilityStack.tempo.tag }}"
           imagePullPolicy: {{ .Values.observabilityStack.tempo.pullPolicy }}
           securityContext:
             runAsNonRoot: true
-            runAsUser: 1006530000
-            runAsGroup: 1006530000
+            runAsUser: 1011430000
+            runAsGroup: 1011430000
           ports:
             - name: tempo
               containerPort: 3200
@@ -330,15 +330,15 @@ spec:
         app.kubernetes.io/component: loki
     spec:
       securityContext:
-        fsGroup: 1006530000
+        fsGroup: 1011430000
       containers:
         - name: loki
           image: "{{ .Values.observabilityStack.loki.image }}:{{ .Values.observabilityStack.loki.tag }}"
           imagePullPolicy: {{ .Values.observabilityStack.loki.pullPolicy }}
           securityContext:
             runAsNonRoot: true
-            runAsUser: 1006530000
-            runAsGroup: 1006530000
+            runAsUser: 1011430000
+            runAsGroup: 1011430000
           ports:
             - name: http
               containerPort: 3100
@@ -442,15 +442,15 @@ spec:
         app.kubernetes.io/component: grafana
     spec:
       securityContext:
-        fsGroup: 1006530000
+        fsGroup: 1011430000
       containers:
         - name: grafana
           image: "{{ .Values.observabilityStack.grafana.image }}:{{ .Values.observabilityStack.grafana.tag }}"
           imagePullPolicy: {{ .Values.observabilityStack.grafana.pullPolicy }}
           securityContext:
             runAsNonRoot: true
-            runAsUser: 1006530000
-            runAsGroup: 1006530000
+            runAsUser: 1011430000
+            runAsGroup: 1011430000
           ports:
             - name: http
               containerPort: 3000

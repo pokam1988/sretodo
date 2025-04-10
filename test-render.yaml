@@ -457,7 +457,7 @@ spec:
         component: frontend
     spec:
       securityContext:
-        fsGroup: 1006530000
+        fsGroup: 1011430000
       containers:
       - name: frontend
         image: nginxinc/nginx-unprivileged:stable-alpine
@@ -467,8 +467,8 @@ spec:
           name: http
         securityContext:
           runAsNonRoot: true
-          runAsUser: 1006530000
-          runAsGroup: 1006530000
+          runAsUser: 1011430000
+          runAsGroup: 1011430000
         resources:
           limits:
             cpu: 100m
@@ -523,15 +523,15 @@ spec:
         app.kubernetes.io/component: nginx-gateway
     spec:
       securityContext:
-        fsGroup: 1006530000
+        fsGroup: 1011430000
       containers:
         - name: nginx-gateway
           image: "nginx:alpine"
           imagePullPolicy: IfNotPresent
           securityContext:
             runAsNonRoot: true
-            runAsUser: 1006530000
-            runAsGroup: 1006530000
+            runAsUser: 1011430000
+            runAsGroup: 1011430000
           ports:
             - name: http
               containerPort: 8080
@@ -602,15 +602,15 @@ spec:
         app.kubernetes.io/component: otel-collector
     spec:
       securityContext:
-        fsGroup: 1006530000
+        fsGroup: 1011430000
       containers:
         - name: otel-collector
           image: "otel/opentelemetry-collector-contrib:latest"
           imagePullPolicy: Always
           securityContext:
             runAsNonRoot: true
-            runAsUser: 1006530000
-            runAsGroup: 1006530000
+            runAsUser: 1011430000
+            runAsGroup: 1011430000
           ports:
             - name: otlp-grpc
               containerPort: 4317
@@ -658,15 +658,15 @@ spec:
         app.kubernetes.io/component: prometheus
     spec:
       securityContext:
-        fsGroup: 1006530000
+        fsGroup: 1011430000
       containers:
         - name: prometheus
           image: "prom/prometheus:latest"
           imagePullPolicy: Always
           securityContext:
             runAsNonRoot: true
-            runAsUser: 1006530000
-            runAsGroup: 1006530000
+            runAsUser: 1011430000
+            runAsGroup: 1011430000
           ports:
             - name: http
               containerPort: 9090
@@ -712,15 +712,15 @@ spec:
         app.kubernetes.io/component: tempo
     spec:
       securityContext:
-        fsGroup: 1006530000
+        fsGroup: 1011430000
       containers:
         - name: tempo
           image: "grafana/tempo:latest"
           imagePullPolicy: Always
           securityContext:
             runAsNonRoot: true
-            runAsUser: 1006530000
-            runAsGroup: 1006530000
+            runAsUser: 1011430000
+            runAsGroup: 1011430000
           ports:
             - name: tempo
               containerPort: 3200
@@ -769,15 +769,15 @@ spec:
         app.kubernetes.io/component: loki
     spec:
       securityContext:
-        fsGroup: 1006530000
+        fsGroup: 1011430000
       containers:
         - name: loki
           image: "grafana/loki:latest"
           imagePullPolicy: Always
           securityContext:
             runAsNonRoot: true
-            runAsUser: 1006530000
-            runAsGroup: 1006530000
+            runAsUser: 1011430000
+            runAsGroup: 1011430000
           ports:
             - name: http
               containerPort: 3100
@@ -823,15 +823,15 @@ spec:
         app.kubernetes.io/component: grafana
     spec:
       securityContext:
-        fsGroup: 1006530000
+        fsGroup: 1011430000
       containers:
         - name: grafana
           image: "grafana/grafana:latest"
           imagePullPolicy: Always
           securityContext:
             runAsNonRoot: true
-            runAsUser: 1006530000
-            runAsGroup: 1006530000
+            runAsUser: 1011430000
+            runAsGroup: 1011430000
           ports:
             - name: http
               containerPort: 3000
@@ -878,15 +878,15 @@ spec:
     spec:
       # OpenShift compatible security context
       securityContext:
-        fsGroup: 1006530000
+        fsGroup: 1011430000
       containers:
         - name: postgres
           image: "postgres:13"
           imagePullPolicy: IfNotPresent
           securityContext:
             runAsNonRoot: true
-            runAsUser: 1006530000
-            runAsGroup: 1006530000
+            runAsUser: 1011430000
+            runAsGroup: 1011430000
           ports:
             - name: postgres
               containerPort: 5432
