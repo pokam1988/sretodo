@@ -20,4 +20,6 @@ Dieser Service verwaltet die ToDo-Items über eine REST API.
 10. Testdaten über `@PostConstruct` im Controller initialisiert.
 11. OpenTelemetry Java Agent zum Dockerfile hinzugefügt und im `ENTRYPOINT` aktiviert.
 12. OTel Agent via Umgebungsvariablen in `docker-compose.yml` konfiguriert (Service Name, Collector Endpoint, Exporter-Einstellungen).
-13. Logback-Appender-Instrumentierung für OTLP-Logs aktiviert (`otel.instrumentation.logback-appender.enabled=true`). 
+13. Logback-Appender-Instrumentierung für OTLP-Logs aktiviert (`otel.instrumentation.logback-appender.enabled=true`).
+
+#test for action
