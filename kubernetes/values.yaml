@@ -18,7 +18,7 @@ frontend:
   # Image name suffix, prefix is global
   imageName: sretodo-frontend
   # Add specific tag for this service
-  tag: a0a85f3 # <-- TODO: Change to a specific, existing tag if 'latest' doesn't exist or causes issues
+  tag: 68cf111 # <-- TODO: Change to a specific, existing tag if 'latest' doesn't exist or causes issues
   # tag and pullPolicy come from global
   service:
     type: ClusterIP
@@ -58,7 +58,7 @@ dotnetStatistik:
   # Image name suffix
   imageName: sretodo-dotnet-statistik
   # Add specific tag for this service
-  tag: 5f5c04a # <-- TODO: Change to a specific, existing tag if 'latest' doesn't exist or causes issues
+  tag: 68cf111 # <-- TODO: Change to a specific, existing tag if 'latest' doesn't exist or causes issues
   # tag and pullPolicy come from global
   service:
     type: ClusterIP
@@ -78,7 +78,7 @@ pythonPomodoro:
   # Image name suffix
   imageName: sretodo-python-pomodoro
   # Add specific tag for this service
-  tag: 5f5c04a # <-- TODO: Change to a specific, existing tag if 'latest' doesn't exist or causes issues
+  tag: 68cf111 # <-- TODO: Change to a specific, existing tag if 'latest' doesn't exist or causes issues
   # tag and pullPolicy come from global
   service:
     type: ClusterIP
